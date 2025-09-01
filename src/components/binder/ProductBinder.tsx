@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import type { Product } from '../../lib/types';
 import { useCartStore } from '../../store/useCart';
 import { useNotifications } from '../../store/useUi';
@@ -448,9 +448,9 @@ const ProductBinder: React.FC<ProductBinderProps> = ({
                     transition={{ duration: 0.6, ease: 'easeOut' }}
                     className="absolute rounded shadow-lg"
                     style={{
-                      right: 'calc(100% - 1rem)', // Mobile: much closer positioning
+                      right: '90%', // Overlaps 10% aligned with ring area
                       top: '0',
-                      left: 'calc(-100% + 0.5rem)', // Mobile: moved much further left
+                      left: '-90%', // Extends far left but overlaps at ring position
                       bottom: '0',
                       zIndex: 15,
                       transformOrigin: 'right center',
@@ -529,26 +529,154 @@ const ProductBinder: React.FC<ProductBinderProps> = ({
               </AnimatePresence>
             </div>
 
-            {/* Navigation buttons */}
+            {/* Navigation hands */}
             {allProducts.length > 1 && (
               <>
-                {/* Previous button */}
-                <button
-                  onClick={() => handleProductNavigation(-1)}
-                  disabled={!hasPrevious}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-12 h-12 bg-amber-600 hover:bg-amber-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-full shadow-lg transition-colors z-30 flex items-center justify-center"
+                {/* Previous hand - Left side */}
+                <motion.div
+                  onClick={() => !hasPrevious ? null : handleProductNavigation(-1)}
+                  className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 cursor-pointer z-30 ${
+                    !hasPrevious ? 'opacity-20 pointer-events-none' : 'opacity-100'
+                  }`}
+                  initial={{ x: -20, y: 0, rotateY: -30, rotateX: 10 }}
+                  whileHover={hasPrevious ? { 
+                    scale: 1.2,
+                    x: -10,
+                    y: -5,
+                    rotateY: -45,
+                    rotateX: 15,
+                    rotateZ: -5
+                  } : {}}
+                  whileTap={hasPrevious ? { 
+                    scale: 0.9,
+                    x: -15,
+                    y: 2,
+                    rotateY: -50,
+                    rotateX: 20
+                  } : {}}
+                  animate={{
+                    y: [0, -8, 0, -4, 0],
+                    x: [-20, -15, -20, -18, -20],
+                    rotateY: [-30, -35, -30, -32, -30],
+                    rotateX: [10, 15, 10, 12, 10],
+                    rotateZ: [0, -3, 0, -1, 0]
+                  }}
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: [0.4, 0, 0.6, 1],
+                    times: [0, 0.2, 0.5, 0.8, 1]
+                  }}
+                  style={{
+                    transformStyle: 'preserve-3d',
+                    filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.4))',
+                    perspective: '1000px'
+                  }}
                 >
-                  <ChevronLeft className="w-6 h-6" />
-                </button>
+                  <motion.div
+                    className="relative"
+                    animate={{
+                      rotateZ: [0, -2, 2, -1, 0]
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      delay: 0.5
+                    }}
+                  >
+                    <div 
+                      className="text-7xl transform -scale-x-100 select-none"
+                      style={{ 
+                        textShadow: '4px 4px 8px rgba(0,0,0,0.5), 2px 2px 4px rgba(255,255,255,0.1)',
+                        filter: 'drop-shadow(3px 3px 6px rgba(0,0,0,0.4))',
+                        background: 'linear-gradient(145deg, #FDB863, #F59E0B, #D97706)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text'
+                      }}
+                    >
+                      🫴
+                    </div>
+                    {/* Glow effect */}
+                    <div className="absolute inset-0 text-7xl transform -scale-x-100 opacity-30 blur-sm">
+                      🫴
+                    </div>
+                  </motion.div>
+                </motion.div>
 
-                {/* Next button */}
-                <button
-                  onClick={() => handleProductNavigation(1)}
-                  disabled={!hasNext}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-12 h-12 bg-amber-600 hover:bg-amber-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-full shadow-lg transition-colors z-30 flex items-center justify-center"
+                {/* Next hand - Right side */}
+                <motion.div
+                  onClick={() => !hasNext ? null : handleProductNavigation(1)}
+                  className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 cursor-pointer z-30 ${
+                    !hasNext ? 'opacity-20 pointer-events-none' : 'opacity-100'
+                  }`}
+                  initial={{ x: 20, y: 0, rotateY: 30, rotateX: 10 }}
+                  whileHover={hasNext ? { 
+                    scale: 1.2,
+                    x: 10,
+                    y: -5,
+                    rotateY: 45,
+                    rotateX: 15,
+                    rotateZ: 5
+                  } : {}}
+                  whileTap={hasNext ? { 
+                    scale: 0.9,
+                    x: 15,
+                    y: 2,
+                    rotateY: 50,
+                    rotateX: 20
+                  } : {}}
+                  animate={{
+                    y: [0, -8, 0, -4, 0],
+                    x: [20, 15, 20, 18, 20],
+                    rotateY: [30, 35, 30, 32, 30],
+                    rotateX: [10, 15, 10, 12, 10],
+                    rotateZ: [0, 3, 0, 1, 0]
+                  }}
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: [0.4, 0, 0.6, 1],
+                    times: [0, 0.2, 0.5, 0.8, 1]
+                  }}
+                  style={{
+                    transformStyle: 'preserve-3d',
+                    filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.4))',
+                    perspective: '1000px'
+                  }}
                 >
-                  <ChevronRight className="w-6 h-6" />
-                </button>
+                  <motion.div
+                    className="relative"
+                    animate={{
+                      rotateZ: [0, 2, -2, 1, 0]
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      delay: 0.8
+                    }}
+                  >
+                    <div 
+                      className="text-7xl select-none"
+                      style={{ 
+                        textShadow: '4px 4px 8px rgba(0,0,0,0.5), 2px 2px 4px rgba(255,255,255,0.1)',
+                        filter: 'drop-shadow(3px 3px 6px rgba(0,0,0,0.4))',
+                        background: 'linear-gradient(145deg, #FDB863, #F59E0B, #D97706)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text'
+                      }}
+                    >
+                      🫴
+                    </div>
+                    {/* Glow effect */}
+                    <div className="absolute inset-0 text-7xl opacity-30 blur-sm">
+                      🫴
+                    </div>
+                  </motion.div>
+                </motion.div>
               </>
             )}
 

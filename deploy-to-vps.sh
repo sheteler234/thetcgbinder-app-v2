@@ -116,26 +116,13 @@ fi
 print_info "Setting up environment variables..."
 run_on_vps "cd $PROJECT_DIR && cp scripts/deployment/.env.production .env" "Environment setup"
 
-# Step 7: Set up email server (optional)
-print_info "Setting up email server..."
-echo "Would you like to set up the email server now? (y/n)"
-read -r setup_email
-
-if [[ $setup_email =~ ^[Yy]$ ]]; then
-    run_on_vps "cd $PROJECT_DIR && chmod +x scripts/deployment/setup-email-server.sh && scripts/deployment/setup-email-server.sh" "Email server setup"
-    print_warning "Email server is set up but not started. Follow the EMAIL_SETUP.md guide to configure credentials."
-else
-    print_info "Skipping email server setup. You can set it up later with scripts/deployment/setup-email-server.sh"
-fi
-
 print_warning "Don't forget to:"
 echo "1. 🌐 Point your domain DNS to VPS IP: $VPS_IP"
 echo "2. 🔐 Set up SSL: ssh $VPS_USER@$VPS_IP 'sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN'"
 echo "3. 💳 Configure PayPal credentials in the admin panel"
-echo "4. 📧 Configure email service (see EMAIL_SETUP.md)"
+echo "4. 📧 Set up email service in admin panel"
 
 print_status "🎉 Deployment to $DOMAIN complete!"
 echo ""
 print_info "Your app should be accessible at: http://$DOMAIN"
 print_info "After SSL setup: https://$DOMAIN"
-print_info "📖 Email setup guide: EMAIL_SETUP.md"

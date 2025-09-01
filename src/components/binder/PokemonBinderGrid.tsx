@@ -157,7 +157,7 @@ const PokemonBinderGrid: React.FC<PokemonBinderGridProps> = ({
   );
 
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative overflow-visible">
       {/* Main binder container - Pokemon themed */}
       <div className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-purple-900 p-2 sm:p-4 md:p-6 lg:p-8 rounded-lg shadow-2xl border-2 sm:border-3 md:border-4 border-yellow-500" style={{ overflow: 'visible' }}>
         
@@ -228,9 +228,9 @@ const PokemonBinderGrid: React.FC<PokemonBinderGridProps> = ({
                 transition={{ duration: 0.6, ease: 'easeOut' }}
                 className="absolute rounded shadow-lg"
                 style={{
-                  right: 'calc(100% - 2rem)', // Mobile: adjusted positioning
+                  width: '100%', // Full width of turned page
+                  right: '90%', // Overlaps 10% aligned with ring area
                   top: '0',
-                  left: 'calc(-100% + 2.5rem)', // Mobile: moved a bit to the right
                   bottom: '0',
                   zIndex: 15,
                   transformOrigin: 'right center',

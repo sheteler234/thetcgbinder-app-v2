@@ -11,7 +11,7 @@ export interface EmailTemplate {
 
 export interface EmailSettings {
   enabled: boolean;
-  provider: 'emailjs' | 'smtp' | 'sendgrid';
+  provider: 'backend' | 'emailjs' | 'smtp' | 'sendgrid';
   emailjsServiceId?: string;
   emailjsTemplateId?: string;
   emailjsPublicKey?: string;
@@ -269,16 +269,16 @@ class EmailService {
     try {
       const saved = localStorage.getItem('emailSettings');
       this.settings = saved ? JSON.parse(saved) : {
-        enabled: true, // Enable by default for testing
-        provider: 'emailjs',
+        enabled: true,
+        provider: 'backend', // Use backend API by default
         fromEmail: 'noreply@thetcgbinder.com',
         fromName: 'TheTCGBinder'
       };
     } catch (error) {
       console.error('Failed to load email settings:', error);
       this.settings = {
-        enabled: true, // Enable by default for testing
-        provider: 'emailjs',
+        enabled: true,
+        provider: 'backend', // Use backend API by default
         fromEmail: 'noreply@thetcgbinder.com',
         fromName: 'TheTCGBinder'
       };
@@ -475,111 +475,70 @@ class EmailService {
     try {
       console.log('Sending email:', { to, subject, provider: this.settings.provider });
 
-      if (this.settings.provider === 'emailjs') {
-        return this.sendWithEmailJS(to, subject, htmlContent, textContent);
-      } else if (this.settings.provider === 'smtp') {
-        return this.sendWithSMTP(to, subject, htmlContent, textContent);
-      } else if (this.settings.provider === 'sendgrid') {
-        return this.sendWithSendGrid(to, subject, htmlContent, textContent);
+      // Use backend email API for production
+      if (this.settings.provider === 'backend' || import.meta.env.PROD) {
+        return this.sendViaBackendAPI(to, subject, htmlContent, textContent);
       }
 
-      console.error('Unknown email provider:', this.settings.provider);
-      return false;
+      // Fallback to simulation in development
+      console.log('Using email simulation for development');
+      return this.simulateEmailSending(to, subject, htmlContent, textContent);
+
     } catch (error) {
       console.error('Failed to send email:', error);
       return false;
     }
   }
 
-  private async sendWithEmailJS(
+  private async sendViaBackendAPI(
     to: string, 
     subject: string, 
     htmlContent: string, 
     textContent: string
   ): Promise<boolean> {
-    // For now, simulate email sending with EmailJS
-    console.log('Simulating EmailJS send:', {
-      service_id: this.settings.emailjsServiceId,
-      template_id: this.settings.emailjsTemplateId,
-      user_id: this.settings.emailjsPublicKey,
-      template_params: {
-        to_email: to,
-        from_name: this.settings.fromName,
-        from_email: this.settings.fromEmail,
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://thetcgbinder.com:3001/api';
+    
+    const response = await fetch(`${apiUrl}/send-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        to,
         subject,
-        html_content: htmlContent,
-        text_content: textContent
-      }
+        htmlContent,
+        textContent
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    console.log('Email sent successfully via backend API:', result);
+    return true;
+  }
+
+  private async simulateEmailSending(
+    to: string, 
+    subject: string, 
+    htmlContent: string, 
+    textContent: string
+  ): Promise<boolean> {
+    console.log('📧 Simulating email send (development mode):', {
+      to,
+      subject,
+      htmlPreview: htmlContent.substring(0, 100) + '...',
+      textPreview: textContent.substring(0, 100) + '...'
     });
 
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Simulate success for demo
     return true;
   }
 
-  private async sendWithSMTP(
-    to: string, 
-    subject: string, 
-    htmlContent: string, 
-    textContent: string
-  ): Promise<boolean> {
-    // Simulate SMTP sending
-    console.log('Simulating SMTP send:', {
-      host: this.settings.smtpHost,
-      port: this.settings.smtpPort,
-      secure: this.settings.smtpSecure,
-      auth: {
-        user: this.settings.smtpUser
-      },
-      mail: {
-        from: `${this.settings.fromName} <${this.settings.fromEmail}>`,
-        to,
-        subject,
-        html: htmlContent,
-        text: textContent
-      }
-    });
-
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return true;
-  }
-
-  private async sendWithSendGrid(
-    to: string, 
-    subject: string, 
-    htmlContent: string, 
-    textContent: string
-  ): Promise<boolean> {
-    // Simulate SendGrid API
-    console.log('Simulating SendGrid send:', {
-      api_key: this.settings.sendgridApiKey ? '***' : 'NOT_SET',
-      mail: {
-        personalizations: [{
-          to: [{ email: to }]
-        }],
-        from: {
-          email: this.settings.fromEmail,
-          name: this.settings.fromName
-        },
-        subject,
-        content: [
-          {
-            type: 'text/html',
-            value: htmlContent
-          },
-          {
-            type: 'text/plain',
-            value: textContent
-          }
-        ]
-      }
-    });
-
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return true;
-  }
 }
 
 export const emailService = new EmailService();

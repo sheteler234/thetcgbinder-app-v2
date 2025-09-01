@@ -28,6 +28,12 @@ const ProductDetail: React.FC = () => {
   // Handle product navigation from binder
   const handleProductChange = (newProduct: Product) => {
     navigate(`/product/${newProduct.id}`);
+    // Scroll to top on mobile after navigation
+    setTimeout(() => {
+      if (window.innerWidth < 768) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 100);
   };
 
   // Get products from the same category for navigation
@@ -38,7 +44,15 @@ const ProductDetail: React.FC = () => {
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="text-white text-xl mb-4">Product not found</div>
-          <Button onClick={() => navigate('/products')}>
+          <Button onClick={() => {
+            navigate('/products');
+            // Scroll to top on mobile when going back
+            setTimeout(() => {
+              if (window.innerWidth < 768) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }, 100);
+          }}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Products
           </Button>
@@ -253,7 +267,15 @@ const ProductDetail: React.FC = () => {
       {/* Back Button */}
       <div className="p-4">
         <Button
-          onClick={() => navigate('/products')}
+          onClick={() => {
+            navigate('/products');
+            // Scroll to top on mobile when going back
+            setTimeout(() => {
+              if (window.innerWidth < 768) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }, 100);
+          }}
           variant="secondary"
           className="flex items-center space-x-2"
         >

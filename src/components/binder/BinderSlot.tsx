@@ -19,6 +19,12 @@ const BinderSlot: React.FC<BinderSlotProps> = ({ product }) => {
   const handleCardClick = () => {
     if (product) {
       navigate(`/product/${product.id}`);
+      // Scroll to top on mobile after navigation
+      setTimeout(() => {
+        if (window.innerWidth < 768) {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }, 100);
     }
   };
 

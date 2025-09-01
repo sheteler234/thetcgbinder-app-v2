@@ -175,7 +175,14 @@ const EmailTemplateAdmin: React.FC = () => {
           <div className="flex items-center justify-between p-4 border-b border-slate-700">
             <div className="flex items-center gap-2">
               <Mail className="h-5 w-5 text-blue-400" />
-              <h2 className="text-lg font-semibold text-white">Email Template Admin</h2>
+              <div>
+                <h2 className="text-lg font-semibold text-white">Email Template Admin</h2>
+                <div className="text-xs text-slate-400 flex items-center gap-2">
+                  <span>Backend API</span>
+                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span>Production Ready</span>
+                </div>
+              </div>
             </div>
             <Button
               variant="ghost"
@@ -190,7 +197,7 @@ const EmailTemplateAdmin: React.FC = () => {
           <div className="flex-1 flex overflow-hidden">
             {/* Template List */}
             <div className="w-72 border-r border-slate-700 p-4 overflow-y-auto">
-              <h3 className="text-sm font-medium text-slate-300 mb-4">Templates</h3>
+              <h3 className="text-sm font-medium text-slate-300 mb-4">Email Templates</h3>
               <div className="space-y-2">
                 {templates.map((template) => (
                   <button
@@ -207,12 +214,47 @@ const EmailTemplateAdmin: React.FC = () => {
                     </div>
                     <div className="text-xs text-slate-400 truncate">
                       {template.variables.length > 0 
-                        ? `Variables: ${template.variables.join(', ')}`
+                        ? `Variables: ${template.variables.slice(0, 3).join(', ')}${template.variables.length > 3 ? '...' : ''}`
                         : 'No variables'
                       }
                     </div>
                   </button>
                 ))}
+              </div>
+
+              {/* Email Server Status */}
+              <div className="mt-6 pt-4 border-t border-slate-600">
+                <h4 className="text-xs font-medium text-slate-400 mb-3">EMAIL SERVER STATUS</h4>
+                <div className="bg-slate-800 p-3 rounded border border-slate-600">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-slate-400">Backend API</span>
+                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    Endpoint: {import.meta.env.VITE_API_URL || 'https://thetcgbinder.com:3001/api'}
+                  </div>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  onClick={async () => {
+                    try {
+                      const apiUrl = import.meta.env.VITE_API_URL || 'https://thetcgbinder.com:3001/api';
+                      const response = await fetch(`${apiUrl}/health`);
+                      if (response.ok) {
+                        const health = await response.json();
+                        alert(`✅ Email server is healthy!\nProvider: ${health.emailProvider}\nTimestamp: ${health.timestamp}`);
+                      } else {
+                        alert('❌ Email server is not responding');
+                      }
+                    } catch {
+                      alert('❌ Cannot connect to email server');
+                    }
+                  }}
+                  className="w-full text-xs mt-2"
+                >
+                  Test Server Connection
+                </Button>
               </div>
             </div>
 

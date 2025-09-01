@@ -85,7 +85,7 @@ const AdminSideMenu: React.FC = () => {
 
   const tabs = [
     { id: 'paypal', label: 'PayPal Integration', icon: CreditCard },
-    { id: 'email', label: 'Email Templates', icon: Mail },
+    { id: 'email', label: 'Email System', icon: Mail },
     { id: 'general', label: 'General Settings', icon: Settings },
   ];
 
@@ -264,7 +264,7 @@ const AdminSideMenu: React.FC = () => {
               <div>
                 <h3 className="text-lg font-semibold text-white mb-4">Email System</h3>
                 <p className="text-sm text-slate-400 mb-6">
-                  Configure email notifications and manage email templates.
+                  Configure email notifications and manage your email server.
                 </p>
               </div>
 
@@ -293,10 +293,14 @@ const AdminSideMenu: React.FC = () => {
                   onChange={(e) => updateEmailSetting('provider', e.target.value)}
                   className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                 >
-                  <option value="emailjs">EmailJS (Recommended)</option>
-                  <option value="smtp">SMTP Server</option>
-                  <option value="sendgrid">SendGrid</option>
+                  <option value="backend">Backend API (Recommended)</option>
+                  <option value="emailjs">EmailJS (Legacy)</option>
+                  <option value="smtp">SMTP Server (Legacy)</option>
+                  <option value="sendgrid">SendGrid (Legacy)</option>
                 </select>
+                <p className="text-xs text-slate-400 mt-1">
+                  Backend API uses your VPS email server for secure, reliable email delivery
+                </p>
               </div>
 
               {/* From Email */}
@@ -349,6 +353,182 @@ const AdminSideMenu: React.FC = () => {
                   <Mail className="w-4 h-4" />
                   <span>Edit Email Templates</span>
                 </Button>
+              </div>
+
+              {/* Email Server Configuration */}
+              <div className="bg-slate-700 p-4 rounded-lg">
+                <h4 className="text-sm font-medium text-white mb-3">Email Server Configuration</h4>
+                
+                {/* API Endpoint */}
+                <div className="mb-4">
+                  <label className="block text-xs font-medium text-slate-400 mb-1">API Endpoint</label>
+                  <input
+                    type="text"
+                    value={import.meta.env.VITE_API_URL || 'https://thetcgbinder.com:3001/api'}
+                    disabled
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded text-slate-300 text-xs"
+                  />
+                </div>
+
+                {/* Test Email Connection */}
+                <Button
+                  variant="ghost"
+                  onClick={async () => {
+                    try {
+                      const testEmail = prompt('Enter test email address:');
+                      if (!testEmail) return;
+                      
+                      const apiUrl = import.meta.env.VITE_API_URL || 'https://thetcgbinder.com:3001/api';
+                      const response = await fetch(`${apiUrl}/send-email`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          to: testEmail,
+                          subject: 'TheTCGBinder - Test Email',
+                          htmlContent: `
+                            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #1e293b; color: #ffffff; padding: 20px; border-radius: 8px;">
+                              <h1 style="color: #ef4444;">✅ Email Test Successful!</h1>
+                              <p>Your TheTCGBinder email server is working correctly!</p>
+                              <p>Timestamp: ${new Date().toLocaleString()}</p>
+                            </div>
+                          `,
+                          textContent: `Email Test Successful! Your TheTCGBinder email server is working correctly! Timestamp: ${new Date().toLocaleString()}`
+                        })
+                      });
+
+                      if (response.ok) {
+                        showSuccess('Test Email Sent', `Test email sent successfully to ${testEmail}`);
+                      } else {
+                        const error = await response.json();
+                        showError('Test Failed', error.error || 'Failed to send test email');
+                      }
+                    } catch {
+                      showError('Test Failed', 'Email server connection failed. Check if server is running.');
+                    }
+                  }}
+                  className="w-full text-xs"
+                >
+                  <Mail className="w-3 h-3 mr-2" />
+                  Test Email Connection
+                </Button>
+
+                {/* Server Status */}
+                <div className="mt-3 p-3 bg-slate-800 rounded border border-slate-600">
+                  <div className="text-xs text-slate-400 mb-2">Server Status</div>
+                  <Button
+                    variant="ghost"
+                    onClick={async () => {
+                      try {
+                        const apiUrl = import.meta.env.VITE_API_URL || 'https://thetcgbinder.com:3001/api';
+                        const response = await fetch(`${apiUrl}/health`);
+                        const health = await response.json();
+                        showSuccess('Server Status', `Email server is healthy. Provider: ${health.emailProvider}`);
+                      } catch {
+                        showError('Server Status', 'Email server is not responding. Check VPS configuration.');
+                      }
+                    }}
+                    className="w-full text-xs"
+                  >
+                    Check Server Health
+                  </Button>
+                </div>
+
+                {/* Setup Instructions */}
+                <div className="mt-3 text-xs text-slate-400">
+                  <p className="mb-2">📚 Email server setup:</p>
+                  <ul className="space-y-1 text-slate-500">
+                    <li>• Run setup-email-server.sh on VPS</li>
+                    <li>• Configure .env with email credentials</li>
+                    <li>• Start systemd service</li>
+                    <li>• Test connection above</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Email Analytics */}
+              <div className="bg-slate-700 p-4 rounded-lg">
+                <h4 className="text-sm font-medium text-white mb-3">Email Analytics</h4>
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div className="bg-slate-800 p-3 rounded">
+                    <div className="text-slate-400">Today</div>
+                    <div className="text-lg font-bold text-white">0</div>
+                    <div className="text-slate-500">emails sent</div>
+                  </div>
+                  <div className="bg-slate-800 p-3 rounded">
+                    <div className="text-slate-400">This Month</div>
+                    <div className="text-lg font-bold text-white">0</div>
+                    <div className="text-slate-500">emails sent</div>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  Analytics coming soon with backend integration
+                </p>
+              </div>
+
+              {/* Email Server Setup Guide */}
+              <div className="bg-slate-700 p-4 rounded-lg">
+                <h4 className="text-sm font-medium text-white mb-3">🚀 Quick Setup Guide</h4>
+                <div className="space-y-3 text-xs text-slate-300">
+                  <div className="bg-slate-800 p-3 rounded">
+                    <div className="font-medium text-white mb-2">1. Deploy Email Server</div>
+                    <div className="text-slate-400 font-mono bg-slate-900 p-2 rounded">
+                      ./scripts/deployment/deploy-to-vps.sh
+                    </div>
+                  </div>
+                  
+                  <div className="bg-slate-800 p-3 rounded">
+                    <div className="font-medium text-white mb-2">2. Configure Gmail (easiest)</div>
+                    <div className="text-slate-400 space-y-1">
+                      <div>• Enable 2FA on Gmail</div>
+                      <div>• Generate App Password</div>
+                      <div>• Update VPS .env file</div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-slate-800 p-3 rounded">
+                    <div className="font-medium text-white mb-2">3. Test & Start</div>
+                    <div className="text-slate-400 font-mono bg-slate-900 p-2 rounded">
+                      npm run test && sudo systemctl start thetcgbinder-email
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-4 pt-3 border-t border-slate-600">
+                  <Button
+                    variant="ghost"
+                    onClick={() => window.open('/QUICK_EMAIL_SETUP.md', '_blank')}
+                    className="w-full text-xs"
+                  >
+                    📖 View Complete Setup Guide
+                  </Button>
+                </div>
+              </div>
+
+              {/* Available Email Templates */}
+              <div className="bg-slate-700 p-4 rounded-lg">
+                <h4 className="text-sm font-medium text-white mb-3">Available Templates</h4>
+                <div className="space-y-2 text-xs">
+                  <div className="flex items-center justify-between bg-slate-800 p-2 rounded">
+                    <span className="text-slate-300">Order Confirmation</span>
+                    <span className="text-green-400">✓ Active</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-slate-800 p-2 rounded">
+                    <span className="text-slate-300">Order Processing</span>
+                    <span className="text-green-400">✓ Active</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-slate-800 p-2 rounded">
+                    <span className="text-slate-300">Order Shipped</span>
+                    <span className="text-green-400">✓ Active</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-slate-800 p-2 rounded">
+                    <span className="text-slate-300">Order Delivered</span>
+                    <span className="text-green-400">✓ Active</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-slate-800 p-2 rounded">
+                    <span className="text-slate-300">Order Cancelled</span>
+                    <span className="text-green-400">✓ Active</span>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-4">
