@@ -1,0 +1,79 @@
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
+import RootLayout from './app/layout/RootLayout';
+import Home from './app/routes/Home';
+import Products from './app/routes/Products';
+import Auth from './app/routes/Auth';
+import { useAuthStore } from './store/useAuth';
+import NotificationSystem from './components/NotificationSystem';
+
+// Protected Route Component
+const ProtectedRoute: React.FC<{ children: React.ReactNode; requireAdmin?: boolean }> = ({ 
+  children, 
+  requireAdmin = false 
+}) => {
+  const { isAuthenticated, user } = useAuthStore();
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/auth/login" replace />;
+  }
+  
+  if (requireAdmin && user?.role !== 'admin') {
+    return <Navigate to="/" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
+function App() {
+  const { checkAuth } = useAuthStore();
+  
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  return (
+    <Router>
+      <div className="App">
+        <AnimatePresence mode="wait">
+          <Routes>
+            <Route path="/" element={<RootLayout />}>
+              <Route index element={<Home />} />
+              <Route path="auth/login" element={<Auth />} />
+              <Route path="auth/register" element={<Auth />} />
+              
+              {/* Placeholder routes - will be implemented later */}
+              <Route path="products" element={<Products />} />
+              <Route path="product/:id" element={<div className="text-white text-center py-20">Product detail page coming soon...</div>} />
+              <Route path="cart" element={<div className="text-white text-center py-20">Cart page coming soon...</div>} />
+              <Route path="checkout" element={<div className="text-white text-center py-20">Checkout page coming soon...</div>} />
+              <Route path="orders" element={
+                <ProtectedRoute>
+                  <div className="text-white text-center py-20">Orders page coming soon...</div>
+                </ProtectedRoute>
+              } />
+              <Route path="admin" element={
+                <ProtectedRoute requireAdmin>
+                  <div className="text-white text-center py-20">Admin page coming soon...</div>
+                </ProtectedRoute>
+              } />
+              
+              {/* Catch-all route */}
+              <Route path="*" element={
+                <div className="text-white text-center py-20">
+                  <h1 className="text-4xl font-bold mb-4">404 - Page Not Found</h1>
+                  <p className="text-slate-400">The page you're looking for doesn't exist.</p>
+                </div>
+              } />
+            </Route>
+          </Routes>
+        </AnimatePresence>
+        
+        <NotificationSystem />
+      </div>
+    </Router>
+  );
+}
+
+export default App;
