@@ -86,246 +86,260 @@ const ProductBinder: React.FC<ProductBinderProps> = ({
 
   // Create a 9-card grid with product info in surrounding slots and main product in center
   const renderProductGrid = () => {
-    return (
-      <div className="grid grid-cols-3 gap-6 h-full p-6 place-items-center">
-        {/* Position 1: Empty */}
-        <div className="relative w-full h-full aspect-[2.5/3.5] max-w-[200px] max-h-[280px] rounded-lg overflow-hidden bg-white shadow-lg">
-          <div className="h-full flex flex-col justify-center items-center p-3">
-            <div className="text-slate-400 text-center">
-              <div className="mb-2">📦</div>
-              <div className="text-xs">Available Space</div>
+    const cards = [
+      // Position 1: Empty
+      <div key="empty1" className="relative w-full h-full aspect-[2.5/3.5] min-w-[120px] max-w-[200px] max-h-[280px] rounded-lg overflow-hidden bg-white shadow-lg flex-shrink-0">
+        <div className="h-full flex flex-col justify-center items-center p-3">
+          <div className="text-slate-400 text-center">
+            <div className="mb-2">📦</div>
+            <div className="text-xs">Available Space</div>
+          </div>
+        </div>
+      </div>,
+      
+      // Position 2: Complete Product Details with Cart
+      <div key="details" className="relative w-full h-full aspect-[2.5/3.5] min-w-[120px] max-w-[200px] max-h-[280px] rounded-lg overflow-hidden bg-white shadow-lg flex-shrink-0">
+        <div className="h-full p-3 flex flex-col justify-between">
+          <div>
+            <h3 className="font-bold text-slate-800 text-sm leading-tight mb-1">{product.title}</h3>
+            <div className="text-slate-600 text-xs">SKU: {product.sku}</div>
+          </div>
+          <div>
+            <div className="text-center mb-2">
+              <div className="text-green-600 font-bold text-lg mb-1">${product.price}</div>
+              <div className="flex items-center justify-center space-x-2 mb-2">
+                <button 
+                  onClick={() => handleQuantityChange(-1)}
+                  disabled={quantity <= 1}
+                  className="w-6 h-6 bg-slate-200 hover:bg-slate-300 disabled:bg-slate-100 disabled:text-slate-400 rounded-full text-xs transition-colors flex items-center justify-center"
+                >
+                  -
+                </button>
+                <span className="text-sm font-medium min-w-[20px] text-center">{quantity}</span>
+                <button 
+                  onClick={() => handleQuantityChange(1)}
+                  disabled={quantity >= product.stock}
+                  className="w-6 h-6 bg-slate-200 hover:bg-slate-300 disabled:bg-slate-100 disabled:text-slate-400 rounded-full text-xs transition-colors flex items-center justify-center"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+            <button 
+              onClick={handleAddToCart}
+              disabled={product.stock === 0}
+              className="w-full bg-green-500 text-white py-2 px-3 rounded-lg text-xs font-semibold hover:bg-green-600 disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors mb-2"
+            >
+              {product.stock === 0 ? 'Out of Stock' : '🛒 Add to Cart'}
+            </button>
+            <div className="text-slate-600 text-xs text-center">Stock: {product.stock}</div>
+          </div>
+        </div>
+      </div>,
+      
+      // Position 3: Product Details
+      <div key="product-details" className="relative w-full h-full aspect-[2.5/3.5] min-w-[120px] max-w-[200px] max-h-[280px] rounded-lg overflow-hidden bg-white shadow-lg flex-shrink-0">
+        <div className="h-full p-3">
+          <h4 className="text-sm font-semibold text-slate-800 mb-3">Product Details</h4>
+          <div className="space-y-2 text-xs text-slate-600">
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Rarity:</span>
+              <span className="text-amber-600 font-medium">{product.rarity || 'N/A'}</span>
+            </div>
+            {product.number && (
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Number:</span>
+                <span className="text-blue-600 font-medium">{product.number}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Set:</span>
+              <span className="text-purple-600 font-medium">Coming Soon</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Category:</span>
+              <span className="text-slate-800">{product.categoryId}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Condition:</span>
+              <span className={`${getConditionColor(product.condition)} font-medium`}>
+                {getConditionDisplay(product.condition)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Language:</span>
+              <span className="text-slate-800">English</span>
             </div>
           </div>
         </div>
-        
-        {/* Position 2: Complete Product Details with Cart */}
-        <div className="relative w-full h-full aspect-[2.5/3.5] max-w-[200px] max-h-[280px] rounded-lg overflow-hidden bg-white shadow-lg">
-          <div className="h-full p-3 flex flex-col justify-between">
-            <div>
-              <h3 className="font-bold text-slate-800 text-sm leading-tight mb-1">{product.title}</h3>
-              <div className="text-slate-600 text-xs">SKU: {product.sku}</div>
-            </div>
-            <div>
-              <div className="text-center mb-2">
-                <div className="text-green-600 font-bold text-lg mb-1">${product.price}</div>
-                <div className="flex items-center justify-center space-x-2 mb-2">
-                  <button 
-                    onClick={() => handleQuantityChange(-1)}
-                    disabled={quantity <= 1}
-                    className="w-6 h-6 bg-slate-200 hover:bg-slate-300 disabled:bg-slate-100 disabled:text-slate-400 rounded-full text-xs transition-colors flex items-center justify-center"
-                  >
-                    -
-                  </button>
-                  <span className="text-sm font-medium min-w-[20px] text-center">{quantity}</span>
-                  <button 
-                    onClick={() => handleQuantityChange(1)}
-                    disabled={quantity >= product.stock}
-                    className="w-6 h-6 bg-slate-200 hover:bg-slate-300 disabled:bg-slate-100 disabled:text-slate-400 rounded-full text-xs transition-colors flex items-center justify-center"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-              <button 
-                onClick={handleAddToCart}
-                disabled={product.stock === 0}
-                className="w-full bg-green-500 text-white py-2 px-3 rounded-lg text-xs font-semibold hover:bg-green-600 disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors mb-2"
-              >
-                {product.stock === 0 ? 'Out of Stock' : '🛒 Add to Cart'}
-              </button>
-              <div className="text-slate-600 text-xs text-center">Stock: {product.stock}</div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Position 3: Product Details */}
-        <div className="relative w-full h-full aspect-[2.5/3.5] max-w-[200px] max-h-[280px] rounded-lg overflow-hidden bg-white shadow-lg">
-          <div className="h-full p-3">
-            <h4 className="text-sm font-semibold text-slate-800 mb-3">Product Details</h4>
-            <div className="space-y-2 text-xs text-slate-600">
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Rarity:</span>
-                <span className="text-amber-600 font-medium">{product.rarity || 'N/A'}</span>
-              </div>
-              {product.number && (
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Number:</span>
-                  <span className="text-blue-600 font-medium">{product.number}</span>
-                </div>
-              )}
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Set:</span>
-                <span className="text-purple-600 font-medium">Coming Soon</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Category:</span>
-                <span className="text-slate-800">{product.categoryId}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Condition:</span>
-                <span className={`${getConditionColor(product.condition)} font-medium`}>
-                  {getConditionDisplay(product.condition)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Language:</span>
-                <span className="text-slate-800">English</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Position 4: Additional Image 1 */}
-        <div className="relative w-full h-full aspect-[2.5/3.5] max-w-[200px] max-h-[280px] rounded-lg overflow-hidden bg-white shadow-lg">
-          {product.additionalImage1 ? (
-            <div className="relative h-full">
-              <img
-                src={product.additionalImage1}
-                alt={`${product.title} - Additional view 1`}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-white p-2">
-                <div className="text-xs font-bold">Additional Image 1</div>
-              </div>
-            </div>
-          ) : (
-            <div className="h-full flex flex-col justify-center items-center p-3 border-2 border-dashed border-slate-300">
-              <div className="text-center text-slate-400 text-xs">
-                <div className="mb-2">📷</div>
-                <div>Additional Image 1</div>
-                <div className="text-xs mt-1">No image uploaded</div>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        {/* Position 5: Main Product Image (center) - Larger */}
-        <div className="group relative w-full h-full aspect-[2.5/3.5] max-w-[250px] max-h-[350px] cursor-pointer rounded-lg overflow-hidden bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-          {/* Card Image */}
-          <div className="relative w-full h-full bg-gradient-to-br from-blue-900 to-purple-900">
+      </div>,
+      
+      // Position 4: Additional Image 1
+      <div key="additional1" className="relative w-full h-full aspect-[2.5/3.5] min-w-[120px] max-w-[200px] max-h-[280px] rounded-lg overflow-hidden bg-white shadow-lg flex-shrink-0">
+        {product.additionalImage1 ? (
+          <div className="relative h-full">
             <img
-              src={product.image}
-              alt={product.title}
+              src={product.additionalImage1}
+              alt={`${product.title} - Additional view 1`}
               className="w-full h-full object-cover"
             />
-            
-            {/* Hover overlay */}
-            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
-              <div className="opacity-0 group-hover:opacity-100 transition-all duration-300">
-                <div className="bg-white rounded-full p-2 shadow-lg">
-                  <Eye className="w-5 h-5 text-gray-700" />
-                </div>
-              </div>
+            <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-white p-2">
+              <div className="text-xs font-bold">Additional Image 1</div>
             </div>
-            
-            {/* Product overlay */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-              <h3 className="text-white font-bold text-sm mb-1">{product.title}</h3>
-              <div className="flex items-center justify-between">
-                <span className="text-green-400 font-bold text-lg">${product.price}</span>
-                <span className="text-white text-xs bg-black/50 px-2 py-1 rounded">
-                  Stock: {product.stock}
-                </span>
+          </div>
+        ) : (
+          <div className="h-full flex flex-col justify-center items-center p-3 border-2 border-dashed border-slate-300">
+            <div className="text-center text-slate-400 text-xs">
+              <div className="mb-2">📷</div>
+              <div>Additional Image 1</div>
+              <div className="text-xs mt-1">No image uploaded</div>
+            </div>
+          </div>
+        )}
+      </div>,
+      
+      // Position 5: Main Product Image (center) - Larger
+      <div key="main-product" className="group relative w-full h-full aspect-[2.5/3.5] min-w-[140px] max-w-[250px] max-h-[350px] cursor-pointer rounded-lg overflow-hidden bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex-shrink-0">
+        {/* Card Image */}
+        <div className="relative w-full h-full bg-gradient-to-br from-blue-900 to-purple-900">
+          <img
+            src={product.image}
+            alt={product.title}
+            className="w-full h-full object-cover"
+          />
+          
+          {/* Hover overlay */}
+          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
+            <div className="opacity-0 group-hover:opacity-100 transition-all duration-300">
+              <div className="bg-white rounded-full p-2 shadow-lg">
+                <Eye className="w-5 h-5 text-gray-700" />
               </div>
             </div>
           </div>
-        </div>
-        
-        {/* Position 6: Additional Image 2 */}
-        <div className="relative w-full h-full aspect-[2.5/3.5] max-w-[200px] max-h-[280px] rounded-lg overflow-hidden bg-white shadow-lg">
-          {product.additionalImage2 ? (
-            <div className="relative h-full">
-              <img
-                src={product.additionalImage2}
-                alt={`${product.title} - Additional view 2`}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-white p-2">
-                <div className="text-xs font-bold">Additional Image 2</div>
-              </div>
-            </div>
-          ) : (
-            <div className="h-full flex flex-col justify-center items-center p-3 border-2 border-dashed border-slate-300">
-              <div className="text-center text-slate-400 text-xs">
-                <div className="mb-2">📷</div>
-                <div>Additional Image 2</div>
-                <div className="text-xs mt-1">No image uploaded</div>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        {/* Position 7: Condition & Authenticity */}
-        <div className="relative w-full h-full aspect-[2.5/3.5] max-w-[200px] max-h-[280px] rounded-lg overflow-hidden bg-white shadow-lg">
-          <div className="h-full p-3">
-            <h4 className="text-sm font-semibold text-slate-800 mb-3">Authenticity</h4>
-            <div className="space-y-2 text-xs text-slate-600">
-              <div className="flex items-center">
-                <span className="text-green-600 mr-1">💎</span>
-                Certified authentic
-              </div>
-              <div className="flex items-center">
-                <span className="text-blue-600 mr-1">🔍</span>
-                Professionally graded
-              </div>
-              <div className="flex items-center">
-                <span className="text-purple-600 mr-1">🛡️</span>
-                Money-back guarantee
-              </div>
-              <div className="flex items-center">
-                <span className="text-orange-600 mr-1">📸</span>
-                High-res photos
-              </div>
+          
+          {/* Product overlay */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+            <h3 className="text-white font-bold text-sm mb-1">{product.title}</h3>
+            <div className="flex items-center justify-between">
+              <span className="text-green-400 font-bold text-lg">${product.price}</span>
+              <span className="text-white text-xs bg-black/50 px-2 py-1 rounded">
+                Stock: {product.stock}
+              </span>
             </div>
           </div>
         </div>
-        
-        {/* Position 8: Shipping & Rating */}
-        <div className="relative w-full h-full aspect-[2.5/3.5] max-w-[200px] max-h-[280px] rounded-lg overflow-hidden bg-white shadow-lg">
-          <div className="h-full p-3">
-            <h4 className="text-sm font-semibold text-slate-800 mb-2">Rating</h4>
-            <div className="flex items-center space-x-1 mb-3">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className={`w-3 h-3 ${i < 4 ? 'bg-yellow-400' : 'bg-slate-300'} rounded-full`} />
-              ))}
-              <span className="text-xs text-slate-600 ml-1">(4.5/5)</span>
+      </div>,
+      
+      // Position 6: Additional Image 2
+      <div key="additional2" className="relative w-full h-full aspect-[2.5/3.5] min-w-[120px] max-w-[200px] max-h-[280px] rounded-lg overflow-hidden bg-white shadow-lg flex-shrink-0">
+        {product.additionalImage2 ? (
+          <div className="relative h-full">
+            <img
+              src={product.additionalImage2}
+              alt={`${product.title} - Additional view 2`}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-white p-2">
+              <div className="text-xs font-bold">Additional Image 2</div>
             </div>
-            <h4 className="text-sm font-semibold text-slate-800 mb-2">Shipping</h4>
-            <div className="space-y-1 text-xs text-slate-600">
-              <div className="flex items-center">
-                <span className="text-green-600 mr-1">✓</span>
-                Free over $50
-              </div>
-              <div className="flex items-center">
-                <span className="text-blue-600 mr-1">🚚</span>
-                Ships in 1-2 days
-              </div>
-              <div className="flex items-center">
-                <span className="text-purple-600 mr-1">↩️</span>
-                30-day returns
-              </div>
+          </div>
+        ) : (
+          <div className="h-full flex flex-col justify-center items-center p-3 border-2 border-dashed border-slate-300">
+            <div className="text-center text-slate-400 text-xs">
+              <div className="mb-2">📷</div>
+              <div>Additional Image 2</div>
+              <div className="text-xs mt-1">No image uploaded</div>
+            </div>
+          </div>
+        )}
+      </div>,
+      
+      // Position 7: Condition & Authenticity
+      <div key="authenticity" className="relative w-full h-full aspect-[2.5/3.5] min-w-[120px] max-w-[200px] max-h-[280px] rounded-lg overflow-hidden bg-white shadow-lg flex-shrink-0">
+        <div className="h-full p-3">
+          <h4 className="text-sm font-semibold text-slate-800 mb-3">Authenticity</h4>
+          <div className="space-y-2 text-xs text-slate-600">
+            <div className="flex items-center">
+              <span className="text-green-600 mr-1">💎</span>
+              Certified authentic
+            </div>
+            <div className="flex items-center">
+              <span className="text-blue-600 mr-1">🔍</span>
+              Professionally graded
+            </div>
+            <div className="flex items-center">
+              <span className="text-purple-600 mr-1">🛡️</span>
+              Money-back guarantee
+            </div>
+            <div className="flex items-center">
+              <span className="text-orange-600 mr-1">📸</span>
+              High-res photos
             </div>
           </div>
         </div>
-        
-        {/* Position 9: Wishlist & Actions */}
-        <div className="relative w-full h-full aspect-[2.5/3.5] max-w-[200px] max-h-[280px] rounded-lg overflow-hidden bg-gradient-to-br from-pink-500 to-purple-600 shadow-lg cursor-pointer">
-          <div className="h-full flex flex-col justify-center items-center text-white p-3 space-y-3">
-            <button className="flex flex-col items-center space-y-1 hover:scale-110 transition-transform">
-              <span className="text-2xl">♥</span>
-              <span className="text-xs font-semibold">Add to Wishlist</span>
-            </button>
-            <button className="flex flex-col items-center space-y-1 hover:scale-110 transition-transform">
-              <span className="text-xl">📤</span>
-              <span className="text-xs font-semibold">Share</span>
-            </button>
-            <button className="flex flex-col items-center space-y-1 hover:scale-110 transition-transform">
-              <span className="text-xl">🔍</span>
-              <span className="text-xs font-semibold">Compare</span>
-            </button>
+      </div>,
+      
+      // Position 8: Shipping & Rating
+      <div key="shipping" className="relative w-full h-full aspect-[2.5/3.5] min-w-[120px] max-w-[200px] max-h-[280px] rounded-lg overflow-hidden bg-white shadow-lg flex-shrink-0">
+        <div className="h-full p-3">
+          <h4 className="text-sm font-semibold text-slate-800 mb-2">Rating</h4>
+          <div className="flex items-center space-x-1 mb-3">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className={`w-3 h-3 ${i < 4 ? 'bg-yellow-400' : 'bg-slate-300'} rounded-full`} />
+            ))}
+            <span className="text-xs text-slate-600 ml-1">(4.5/5)</span>
           </div>
+          <h4 className="text-sm font-semibold text-slate-800 mb-2">Shipping</h4>
+          <div className="space-y-1 text-xs text-slate-600">
+            <div className="flex items-center">
+              <span className="text-green-600 mr-1">✓</span>
+              Free over $50
+            </div>
+            <div className="flex items-center">
+              <span className="text-blue-600 mr-1">🚚</span>
+              Ships in 1-2 days
+            </div>
+            <div className="flex items-center">
+              <span className="text-purple-600 mr-1">↩️</span>
+              30-day returns
+            </div>
+          </div>
+        </div>
+      </div>,
+      
+      // Position 9: Wishlist & Actions
+      <div key="actions" className="relative w-full h-full aspect-[2.5/3.5] min-w-[120px] max-w-[200px] max-h-[280px] rounded-lg overflow-hidden bg-gradient-to-br from-pink-500 to-purple-600 shadow-lg cursor-pointer flex-shrink-0">
+        <div className="h-full flex flex-col justify-center items-center text-white p-3 space-y-3">
+          <button className="flex flex-col items-center space-y-1 hover:scale-110 transition-transform">
+            <span className="text-2xl">♥</span>
+            <span className="text-xs font-semibold">Add to Wishlist</span>
+          </button>
+          <button className="flex flex-col items-center space-y-1 hover:scale-110 transition-transform">
+            <span className="text-xl">📤</span>
+            <span className="text-xs font-semibold">Share</span>
+          </button>
+          <button className="flex flex-col items-center space-y-1 hover:scale-110 transition-transform">
+            <span className="text-xl">🔍</span>
+            <span className="text-xs font-semibold">Compare</span>
+          </button>
         </div>
       </div>
+    ];
+
+    return (
+      <>
+        {/* Desktop: 3x3 Grid */}
+        <div className="hidden md:grid md:grid-cols-3 gap-6 h-full p-6 place-items-center">
+          {cards}
+        </div>
+        
+        {/* Mobile/Tablet: Vertical Scrollable Column */}
+        <div className="md:hidden h-full overflow-y-auto">
+          <div className="flex flex-col space-y-4 p-4 items-center">
+            {cards}
+          </div>
+        </div>
+      </>
     );
   };
 

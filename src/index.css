@@ -194,22 +194,25 @@ body {
   position: relative;
 }
 
-.binder-page-black::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: 
-    /* Vertical lines for 3x3 grid */
-    linear-gradient(90deg, transparent 32.5%, #333 33%, #333 33.5%, transparent 33.5%),
-    linear-gradient(90deg, transparent 65.5%, #333 66%, #333 66.5%, transparent 66.5%),
-    /* Horizontal lines for 3x3 grid */
-    linear-gradient(0deg, transparent 32.5%, #333 33%, #333 33.5%, transparent 33.5%),
-    linear-gradient(0deg, transparent 65.5%, #333 66%, #333 66.5%, transparent 66.5%);
-  pointer-events: none;
-  z-index: 1;
+/* Grid lines - hidden on mobile, visible on desktop */
+@media (min-width: 768px) {
+  .binder-page-black::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      /* Vertical lines for 3x3 grid */
+      linear-gradient(90deg, transparent 32.5%, #333 33%, #333 33.5%, transparent 33.5%),
+      linear-gradient(90deg, transparent 65.5%, #333 66%, #333 66.5%, transparent 66.5%),
+      /* Horizontal lines for 3x3 grid */
+      linear-gradient(0deg, transparent 32.5%, #333 33%, #333 33.5%, transparent 33.5%),
+      linear-gradient(0deg, transparent 65.5%, #333 66%, #333 66.5%, transparent 66.5%);
+    pointer-events: none;
+    z-index: 1;
+  }
 }
 
 .binder-page-black::after {
