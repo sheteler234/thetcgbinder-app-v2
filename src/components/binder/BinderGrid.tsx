@@ -380,9 +380,9 @@ const BinderGrid: React.FC<BinderGridProps> = ({
                 transition={{ duration: 0.6, ease: 'easeOut' }}
                 className="absolute rounded shadow-lg"
                 style={{
-                  right: 'calc(100% - 4rem)',
+                  right: 'calc(100% - 2rem)', // Mobile: adjusted positioning
                   top: '0',
-                  left: 'calc(-100% + 5rem)',
+                  left: 'calc(-100% + 2.5rem)', // Mobile: moved a bit to the right
                   bottom: '0',
                   zIndex: 15,
                   transformOrigin: 'right center',

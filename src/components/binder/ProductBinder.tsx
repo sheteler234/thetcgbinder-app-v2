@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Product } from '../../lib/types';
@@ -22,6 +22,28 @@ const ProductBinder: React.FC<ProductBinderProps> = ({
   const [direction, setDirection] = useState(0);
   const { addItem } = useCartStore();
   const { addNotification } = useNotifications();
+  const binderRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to center on mobile when product changes
+  useEffect(() => {
+    const scrollToCenter = () => {
+      if (binderRef.current && window.innerWidth < 768) { // Only on mobile
+        const container = binderRef.current;
+        const containerHeight = container.clientHeight;
+        const scrollHeight = container.scrollHeight;
+        const centerPosition = (scrollHeight - containerHeight) / 2;
+        
+        container.scrollTo({
+          top: centerPosition,
+          behavior: 'smooth'
+        });
+      }
+    };
+
+    // Small delay to ensure content is rendered
+    const timer = setTimeout(scrollToCenter, 100);
+    return () => clearTimeout(timer);
+  }, [product.id]); // Trigger when product changes
 
   // Find current product index and related products
   const currentIndex = allProducts.findIndex(p => p.id === product.id);
@@ -334,7 +356,7 @@ const ProductBinder: React.FC<ProductBinderProps> = ({
         </div>
         
         {/* Mobile/Tablet: Vertical Scrollable Column */}
-        <div className="md:hidden h-full overflow-y-auto">
+        <div ref={binderRef} className="md:hidden h-full overflow-y-auto">
           <div className="flex flex-col space-y-4 p-4 items-center">
             {cards}
           </div>
@@ -426,9 +448,9 @@ const ProductBinder: React.FC<ProductBinderProps> = ({
                     transition={{ duration: 0.6, ease: 'easeOut' }}
                     className="absolute rounded shadow-lg"
                     style={{
-                      right: 'calc(100% - 4rem)',
+                      right: 'calc(100% - 1rem)', // Mobile: much closer positioning
                       top: '0',
-                      left: 'calc(-100% + 5rem)',
+                      left: 'calc(-100% + 0.5rem)', // Mobile: moved much further left
                       bottom: '0',
                       zIndex: 15,
                       transformOrigin: 'right center',
