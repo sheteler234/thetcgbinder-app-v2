@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { ArrowLeft, ShoppingCart, Heart, Star, Plus, Minus, Shield, Truck } from 'lucide-react';
 import { useProductStore } from '../../store/useProducts';
 import { useCartStore } from '../../store/useCart';

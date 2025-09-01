@@ -1,4 +1,4 @@
-import type { Order, OrderItem } from './types';
+import type { Order } from './types';
 
 export interface EmailTemplate {
   id: string;

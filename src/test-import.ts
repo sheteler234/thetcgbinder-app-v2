@@ -1,9 +1,12 @@
 // Test file to check import resolution
-import { ApiResponse } from './lib/types';
+import type { ApiResponse } from './lib/types';
 
-console.log('ApiResponse imported successfully:', typeof ApiResponse);
+console.log('ApiResponse imported successfully');
 
-export const testApiResponse: ApiResponse<string> = {
+// Create a test function that uses the type
+const createTestResponse = (): ApiResponse<string> => ({
   data: 'test',
   message: 'success'
-};
+});
+
+export { createTestResponse };
