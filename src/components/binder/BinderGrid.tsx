@@ -232,7 +232,7 @@ const BinderGrid: React.FC<BinderGridProps> = ({
   };
 
   const renderGrid = (products: Product[]) => (
-    <div className="grid grid-cols-3 gap-6 h-full p-6 place-items-center">
+    <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6 h-full p-3 sm:p-4 md:p-6 place-items-center">
       {[...Array(9)].map((_, index) => (
         <BinderSlot
           key={index}
@@ -244,7 +244,7 @@ const BinderGrid: React.FC<BinderGridProps> = ({
   );
 
   const renderEmptyGrid = () => (
-    <div className="grid grid-cols-3 gap-6 h-full p-6 place-items-center">
+    <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6 h-full p-3 sm:p-4 md:p-6 place-items-center">
       {[...Array(9)].map((_, index) => (
         <BinderSlot
           key={index}
@@ -255,48 +255,48 @@ const BinderGrid: React.FC<BinderGridProps> = ({
   );
 
   const renderWelcomePage = () => (
-    <div className="h-full p-6 flex flex-col items-center justify-center text-center bg-gradient-to-br from-amber-50 to-yellow-50 rounded-lg">
-      <div className="max-w-md mx-auto space-y-6">
-        <div className="w-24 h-24 mx-auto bg-gradient-to-br from-amber-600 to-yellow-700 rounded-full flex items-center justify-center mb-6">
-          <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="h-full p-3 sm:p-4 md:p-6 flex flex-col items-center justify-center text-center bg-gradient-to-br from-amber-50 to-yellow-50 rounded-lg">
+      <div className="max-w-xs sm:max-w-sm md:max-w-md mx-auto space-y-3 sm:space-y-4 md:space-y-6">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mx-auto bg-gradient-to-br from-amber-600 to-yellow-700 rounded-full flex items-center justify-center mb-3 sm:mb-4 md:mb-6">
+          <svg className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
         </div>
         
-        <h1 className="text-3xl sm:text-4xl font-bold text-amber-900 mb-4">
+        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-amber-900 mb-2 sm:mb-3 md:mb-4">
           Welcome to Your
         </h1>
-        <h2 className="text-2xl sm:text-3xl font-bold text-yellow-800 mb-6">
+        <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-yellow-800 mb-3 sm:mb-4 md:mb-6">
           Yu-Gi-Oh! Card Binder
         </h2>
         
-        <p className="text-amber-700 text-lg leading-relaxed mb-8">
+        <p className="text-amber-700 text-sm sm:text-base md:text-lg leading-relaxed mb-4 sm:mb-6 md:mb-8">
           Master the art of dueling with your Yu-Gi-Oh! trading card collection. 
           Each page holds up to 9 cards in protective slots.
         </p>
         
         <div className="flex items-center justify-center space-x-2 text-amber-600">
-          <span className="text-sm">Swipe or click</span>
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <span className="text-xs sm:text-sm">Swipe or click</span>
+          <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
-          <span className="text-sm">to start browsing</span>
+          <span className="text-xs sm:text-sm">to start browsing</span>
         </div>
       </div>
     </div>
   );
 
   return (
-    <div className="relative overflow-visible">
+    <div className="relative overflow-hidden">
       {/* Main binder container */}
-      <div className="relative bg-gradient-to-br from-amber-900 via-amber-800 to-amber-900 p-4 sm:p-6 md:p-8 lg:p-12 rounded-lg shadow-2xl border-4 border-amber-700" style={{ overflow: 'visible' }}>
+      <div className="relative bg-gradient-to-br from-amber-900 via-amber-800 to-amber-900 p-2 sm:p-4 md:p-6 lg:p-8 rounded-lg shadow-2xl border-2 sm:border-3 md:border-4 border-amber-700" style={{ overflow: 'visible' }}>
         
         {/* Yu-Gi-Oh! Logo - Top Left */}
-        <div className="absolute -top-4 left-8 sm:left-10 md:left-12 lg:left-16 z-30">
+        <div className="absolute -top-2 sm:-top-3 md:-top-4 left-4 sm:left-6 md:left-8 lg:left-12 z-30">
           <img
             src="/yugioh-logo.webp"
             alt="Yu-Gi-Oh! Trading Card Game"
-            className="w-32 sm:w-40 md:w-52 lg:w-64 h-auto drop-shadow-lg opacity-90 hover:opacity-100 transition-opacity"
+            className="w-20 h-auto sm:w-24 md:w-32 lg:w-40 xl:w-48 drop-shadow-lg opacity-90 hover:opacity-100 transition-opacity"
             onError={(e) => {
               // Fallback to text if image doesn't load
               e.currentTarget.style.display = 'none';
@@ -305,7 +305,7 @@ const BinderGrid: React.FC<BinderGridProps> = ({
             }}
           />
           <div 
-            className="text-amber-200 font-bold text-sm bg-black/50 px-3 py-2 rounded hidden"
+            className="text-amber-200 font-bold text-xs sm:text-sm bg-black/50 px-2 py-1 sm:px-3 sm:py-2 rounded hidden"
             style={{ display: 'none' }}
           >
             YU-GI-OH!
@@ -313,11 +313,11 @@ const BinderGrid: React.FC<BinderGridProps> = ({
         </div>
         
         {/* Yugi Character - Standing above the Brown Binder */}
-        <div className="absolute -top-32 sm:-top-40 md:-top-48 lg:-top-56 right-2 sm:right-4 md:right-6 lg:right-8 z-20 pointer-events-none">
+        <div className="absolute -top-16 sm:-top-20 md:-top-24 lg:-top-32 xl:-top-40 right-1 sm:right-2 md:right-4 lg:right-6 xl:right-8 z-20 pointer-events-none">
           <motion.img
             src="/yugi-character.png"
             alt="Yugi Muto"
-            className="w-24 h-32 sm:w-32 sm:h-40 md:w-40 md:h-52 lg:w-48 lg:h-64 object-contain drop-shadow-xl"
+            className="w-12 h-16 sm:w-16 sm:h-20 md:w-20 md:h-26 lg:w-24 lg:h-32 xl:w-32 xl:h-40 object-contain drop-shadow-xl"
             initial={{ opacity: 0, y: -30, scale: 0.8 }}
             animate={{ 
               opacity: 1, 
@@ -350,12 +350,12 @@ const BinderGrid: React.FC<BinderGridProps> = ({
         </div>
 
         {/* Binder rings with more realistic 3D effect */}
-                {/* Binder rings */}
-        <div className="absolute left-4 top-16 bottom-28 flex flex-col justify-between items-center w-8 z-20">
+        {/* Binder rings */}
+        <div className="absolute left-2 sm:left-3 md:left-4 top-8 sm:top-12 md:top-16 bottom-12 sm:bottom-16 md:bottom-20 lg:bottom-24 flex flex-col justify-between items-center w-3 sm:w-4 md:w-6 lg:w-8 z-20">
           {[...Array(6)].map((_, i) => (
             <div
               key={i}
-              className="w-6 h-6 border-4 border-gray-400 rounded-full bg-gradient-to-br from-gray-300 to-gray-500 shadow-inner"
+              className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 border-2 sm:border-3 md:border-4 border-gray-400 rounded-full bg-gradient-to-br from-gray-300 to-gray-500 shadow-inner"
               style={{
                 transform: 'perspective(100px) rotateX(45deg)',
                 boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2)'
@@ -365,7 +365,7 @@ const BinderGrid: React.FC<BinderGridProps> = ({
         </div>
 
         {/* Page content area */}
-        <div className="ml-4 sm:ml-6 md:ml-8 lg:ml-12 mt-4 sm:mt-6 md:mt-8 rounded shadow-lg relative" style={{ aspectRatio: '8.5/11', overflow: 'visible' }}>
+        <div className="ml-3 sm:ml-4 md:ml-6 lg:ml-8 xl:ml-12 mt-2 sm:mt-4 md:mt-6 lg:mt-8 rounded shadow-lg relative" style={{ aspectRatio: '8.5/11', overflow: 'visible' }}>
           {/* Turned Page - Positioned to the left with exact same dimensions */}
           <AnimatePresence>
             {showLeftPage && leftPageIndex !== null && currentPage > 0 && (
@@ -390,9 +390,7 @@ const BinderGrid: React.FC<BinderGridProps> = ({
                   backfaceVisibility: 'hidden'
                 }}
               >
-                <div className="p-4 h-full binder-page-black">
-                  {renderEmptyGrid()}
-                </div>
+                <div className="p-2 sm:p-3 md:p-4 h-full binder-page-black">{renderEmptyGrid()}</div>
                 
                 {/* Page binding edge shadow */}
                 <div className="absolute top-0 bottom-0 right-0 w-4 bg-gradient-to-r from-transparent via-black/20 to-black/40 pointer-events-none"></div>
@@ -429,7 +427,7 @@ const BinderGrid: React.FC<BinderGridProps> = ({
                 ease: [0.22, 1, 0.36, 1],
                 times: [0, 0.25, 0.5, 0.8, 1]
               }}
-              className="p-4 h-full binder-page-black relative"
+              className="p-2 sm:p-3 md:p-4 h-full binder-page-black relative"
               style={{ 
                 transformStyle: 'preserve-3d',
                 backfaceVisibility: 'hidden',
@@ -442,9 +440,9 @@ const BinderGrid: React.FC<BinderGridProps> = ({
         </div>
 
         {/* Navigation - aligned with the white page content */}
-        <div className="mt-6 sm:mt-8 md:mt-10 lg:mt-14 flex justify-between items-center">
+        <div className="mt-3 sm:mt-4 md:mt-6 lg:mt-8 xl:mt-12 flex justify-between items-center">
           {/* Page navigation controls - aligned with left edge of white page */}
-          <div className="ml-4 sm:ml-6 md:ml-8 lg:ml-12 flex items-center gap-2 sm:gap-3 md:gap-4">
+          <div className="ml-3 sm:ml-4 md:ml-6 lg:ml-8 xl:ml-12 flex items-center gap-1 sm:gap-2 md:gap-3 lg:gap-4">
             <button
               onClick={prevPage}
               disabled={currentPage === 0}
