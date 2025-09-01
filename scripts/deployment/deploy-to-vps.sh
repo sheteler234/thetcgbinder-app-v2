@@ -73,7 +73,7 @@ print_status "SSH connection verified!"
 
 # Step 2: Set up VPS environment (if not done already)
 print_info "Setting up VPS environment..."
-run_on_vps "curl -fsSL https://raw.githubusercontent.com/sheteler234/thetcgbinder-app-v2/main/vps-setup.sh -o vps-setup.sh && chmod +x vps-setup.sh && ./vps-setup.sh" "VPS environment setup"
+run_on_vps "curl -fsSL https://raw.githubusercontent.com/sheteler234/thetcgbinder-app-v2/main/scripts/deployment/vps-setup.sh -o vps-setup.sh && chmod +x vps-setup.sh && ./vps-setup.sh" "VPS environment setup"
 
 # Step 3: Clone or update repository
 print_info "Cloning/updating repository on VPS..."
@@ -85,11 +85,36 @@ run_on_vps "cd $PROJECT_DIR && npm install && npm run build" "Build process"
 
 # Step 5: Configure Nginx
 print_info "Configuring Nginx..."
-run_on_vps "cd $PROJECT_DIR && sudo cp nginx.conf /etc/nginx/sites-available/thetcgbinder && sudo ln -sf /etc/nginx/sites-available/thetcgbinder /etc/nginx/sites-enabled/ && sudo nginx -t && sudo systemctl reload nginx" "Nginx configuration"
+run_on_vps "cd $PROJECT_DIR && cp scripts/deployment/nginx.conf /etc/nginx/sites-available/thetcgbinder && ln -sf /etc/nginx/sites-available/thetcgbinder /etc/nginx/sites-enabled/ && nginx -t" "Nginx configuration"
+
+# Step 5.1: Reload/Restart Nginx with better error handling
+print_info "Reloading Nginx..."
+ssh $VPS_USER@$VPS_IP "
+    if systemctl reload nginx; then
+        echo 'Nginx reloaded successfully'
+    else
+        echo 'Nginx reload failed, attempting restart...'
+        if systemctl restart nginx; then
+            echo 'Nginx restarted successfully'
+        else
+            echo 'Nginx restart failed, checking configuration...'
+            nginx -t
+            systemctl status nginx --no-pager
+            exit 1
+        fi
+    fi
+"
+
+if [ $? -eq 0 ]; then
+    print_status "Nginx service updated successfully!"
+else
+    print_error "Nginx service update failed. Please check manually."
+    exit 1
+fi
 
 # Step 6: Set up environment variables
 print_info "Setting up environment variables..."
-run_on_vps "cd $PROJECT_DIR && cp .env.production .env" "Environment setup"
+run_on_vps "cd $PROJECT_DIR && cp scripts/deployment/.env.production .env" "Environment setup"
 
 print_warning "Don't forget to:"
 echo "1. 🌐 Point your domain DNS to VPS IP: $VPS_IP"

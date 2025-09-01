@@ -52,10 +52,43 @@ if [ $? -ne 0 ]; then
 fi
 
 print_status "Reloading Nginx..."
-sudo systemctl reload nginx
 
-if [ $? -ne 0 ]; then
-    print_warning "Nginx reload failed. You may need to restart it manually."
+# Check if we're running as root or if we need sudo
+if [ "$EUID" -eq 0 ]; then
+    # Running as root, no sudo needed
+    systemctl reload nginx
+    NGINX_STATUS=$?
+else
+    # Not root, use sudo
+    sudo systemctl reload nginx
+    NGINX_STATUS=$?
+fi
+
+if [ $NGINX_STATUS -ne 0 ]; then
+    print_warning "Nginx reload failed. Attempting to restart..."
+    
+    # Try to restart nginx instead
+    if [ "$EUID" -eq 0 ]; then
+        systemctl restart nginx
+        NGINX_RESTART=$?
+    else
+        sudo systemctl restart nginx
+        NGINX_RESTART=$?
+    fi
+    
+    if [ $NGINX_RESTART -ne 0 ]; then
+        print_error "Nginx restart also failed. Please check Nginx configuration:"
+        if [ "$EUID" -eq 0 ]; then
+            nginx -t
+        else
+            sudo nginx -t
+        fi
+        print_error "You may need to fix the configuration and restart manually."
+    else
+        print_status "Nginx successfully restarted!"
+    fi
+else
+    print_status "Nginx reloaded successfully!"
 fi
 
 print_status "Deployment complete! 🎉"
