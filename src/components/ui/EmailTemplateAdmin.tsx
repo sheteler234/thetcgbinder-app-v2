@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, Mail, Eye, Edit3, RotateCcw } from 'lucide-react';
 import { Button } from './Button';
 import { useUiStore } from '../../store/useUi';
 import { useNotifications } from '../../store/useUi';
-import { emailService } from '../../lib/emailService';
+import { emailService, type EmailSettings } from '../../lib/emailService';
 
 interface EmailTemplate {
   name: string;
@@ -21,8 +21,9 @@ const EmailTemplateAdmin: React.FC = () => {
   const [editingSubject, setEditingSubject] = useState<string>('');
   const [editingBody, setEditingBody] = useState<string>('');
   const [previewMode, setPreviewMode] = useState<boolean>(false);
+  const [currentEmailSettings, setCurrentEmailSettings] = useState<EmailSettings | null>(null);
 
-  const loadTemplates = () => {
+  const loadTemplates = useCallback(() => {
     const allTemplates = emailService.getAllTemplates();
     const templateArray: EmailTemplate[] = Object.entries(allTemplates).map(([key, template]) => ({
       name: key,
@@ -31,25 +32,24 @@ const EmailTemplateAdmin: React.FC = () => {
       variables: extractVariables(template.subject + template.body)
     }));
     setTemplates(templateArray);
-  };
+  }, []);
 
-  // Load templates on mount
+  const loadEmailSettings = useCallback(() => {
+    try {
+      const settings = emailService.getSettings();
+      setCurrentEmailSettings(settings);
+    } catch (error) {
+      console.error('Failed to load email settings:', error);
+    }
+  }, []);
+
+  // Load templates and email settings on mount
   useEffect(() => {
-    const loadTemplates = () => {
-      const allTemplates = emailService.getAllTemplates();
-      const templateArray: EmailTemplate[] = Object.entries(allTemplates).map(([key, template]) => ({
-        name: key,
-        subject: template.subject,
-        body: template.body,
-        variables: extractVariables(template.subject + template.body)
-      }));
-      setTemplates(templateArray);
-    };
-
     if (isEmailTemplateAdminOpen) {
       loadTemplates();
+      loadEmailSettings();
     }
-  }, [isEmailTemplateAdminOpen]);
+  }, [isEmailTemplateAdminOpen, loadTemplates, loadEmailSettings]);
 
   const extractVariables = (text: string): string[] => {
     const matches = text.match(/\{\{([^}]+)\}\}/g);
@@ -230,16 +230,43 @@ const EmailTemplateAdmin: React.FC = () => {
                     <span className="text-xs text-slate-400">Backend API</span>
                     <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                   </div>
-                  <div className="text-xs text-slate-500">
-                    Endpoint: {import.meta.env.VITE_API_URL || 'https://thetcgbinder.com:3001/api'}
+                  <div className="text-xs text-slate-500 mb-2">
+                    Endpoint: {import.meta.env.VITE_API_URL || 'https://thetcgbinder.com:3005/api'}
                   </div>
+                  
+                  {/* Current Provider Info */}
+                  {currentEmailSettings && (
+                    <div className="mt-3 pt-3 border-t border-slate-600">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-slate-400">Provider</span>
+                        <span className="text-xs font-medium text-slate-300">
+                          {currentEmailSettings.provider.replace('-', ' ').toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-slate-400">Status</span>
+                        <div className="flex items-center gap-1">
+                          <div className={`w-2 h-2 rounded-full ${currentEmailSettings.enabled ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                          <span className="text-xs text-slate-300">
+                            {currentEmailSettings.enabled ? 'Enabled' : 'Disabled'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-400">From</span>
+                        <span className="text-xs text-slate-300 truncate ml-2">
+                          {currentEmailSettings.fromName} &lt;{currentEmailSettings.fromEmail}&gt;
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <Button
                   variant="ghost"
                   onClick={async () => {
                     try {
-                      const apiUrl = import.meta.env.VITE_API_URL || 'https://thetcgbinder.com:3001/api';
+                      const apiUrl = import.meta.env.VITE_API_URL || 'https://thetcgbinder.com:3005/api';
                       const response = await fetch(`${apiUrl}/health`);
                       if (response.ok) {
                         const health = await response.json();

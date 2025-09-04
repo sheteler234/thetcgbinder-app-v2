@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Settings, CreditCard, Mail, Search, Shield, Bell, Users, Eye, EyeOff, Save, Edit3, RotateCcw } from 'lucide-react';
+import { X, Settings, CreditCard, Mail, Search, Shield, Bell, Users, Eye, EyeOff, Save } from 'lucide-react';
 import { Button } from './Button';
 import { useNotifications, useUiStore } from '../../store/useUi';
 import { emailService } from '../../lib/emailService';
@@ -25,28 +25,13 @@ interface SMTPConfig {
   password: string;
 }
 
-interface EmailTemplate {
-  name: string;
-  subject: string;
-  body: string;
-  variables: string[];
-}
-
 const AdminSideMenu: React.FC = () => {
   const { showSuccess, showError } = useNotifications();
-  const { isAdminMenuOpen, closeAdminMenu } = useUiStore();
+  const { isAdminMenuOpen, closeAdminMenu, openEmailTemplateAdmin } = useUiStore();
   
   const [activeSection, setActiveSection] = useState('paypal');
   const [searchQuery, setSearchQuery] = useState('');
   const [showSecrets, setShowSecrets] = useState(false);
-  
-  // Email Template State
-  const [showTemplateEditor, setShowTemplateEditor] = useState(false);
-  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
-  const [editingSubject, setEditingSubject] = useState<string>('');
-  const [editingBody, setEditingBody] = useState<string>('');
-  const [previewMode, setPreviewMode] = useState<boolean>(false);
   
   // PayPal Settings State
   const [paypalSettings, setPaypalSettings] = useState<PayPalSettings>(() => {
@@ -141,101 +126,10 @@ const AdminSideMenu: React.FC = () => {
       } else {
         throw new Error('Connection test failed');
       }
-    } catch {
+    } catch (error) {
       showError('Connection Test Failed', 'Unable to connect with current email settings.');
     }
   };
-
-  // Email Template Functions
-  const loadTemplates = useCallback(() => {
-    const allTemplates = emailService.getAllTemplates();
-    const templateArray: EmailTemplate[] = Object.entries(allTemplates).map(([key, template]) => ({
-      name: key,
-      subject: template.subject,
-      body: template.body,
-      variables: extractVariables(template.subject + template.body)
-    }));
-    setTemplates(templateArray);
-  }, []);
-
-  const extractVariables = (text: string): string[] => {
-    const matches = text.match(/\{\{([^}]+)\}\}/g);
-    if (!matches) return [];
-    return [...new Set(matches.map(match => match.slice(2, -2)))];
-  };
-
-  const selectTemplate = (templateName: string) => {
-    setSelectedTemplate(templateName);
-    
-    // Try to find the template in the loaded templates first
-    const template = templates.find(t => t.name === templateName);
-    if (template) {
-      setEditingSubject(template.subject);
-      setEditingBody(template.body);
-    } else {
-      // Fallback: Load template directly from emailService
-      try {
-        const allTemplates = emailService.getAllTemplates();
-        const selectedTemplateData = allTemplates[templateName];
-        if (selectedTemplateData) {
-          setEditingSubject(selectedTemplateData.subject);
-          setEditingBody(selectedTemplateData.body);
-        } else {
-          // If template doesn't exist, set default values
-          setEditingSubject(`${templateName.replace('_', ' ')} - Subject`);
-          setEditingBody(`<div>Your ${templateName.replace('_', ' ')} email content here...</div>`);
-        }
-      } catch (error) {
-        console.error('Error loading template:', error);
-        setEditingSubject(`${templateName.replace('_', ' ')} - Subject`);
-        setEditingBody(`<div>Your ${templateName.replace('_', ' ')} email content here...</div>`);
-      }
-    }
-    
-    setPreviewMode(false);
-  };
-
-  const saveTemplate = async () => {
-    if (!selectedTemplate) return;
-
-    try {
-      await emailService.updateTemplate(selectedTemplate, {
-        subject: editingSubject,
-        body: editingBody
-      });
-      
-      loadTemplates();
-      showSuccess('Template Saved', 'Email template saved successfully');
-    } catch {
-      showError('Save Failed', 'Failed to save email template');
-    }
-  };
-
-  const resetTemplate = async () => {
-    if (!selectedTemplate) return;
-    
-    if (window.confirm('Reset this template to default? This will lose all customizations.')) {
-      try {
-        await emailService.resetTemplate(selectedTemplate);
-        loadTemplates();
-        const template = templates.find(t => t.name === selectedTemplate);
-        if (template) {
-          setEditingSubject(template.subject);
-          setEditingBody(template.body);
-        }
-        showSuccess('Template Reset', 'Template reset to default successfully');
-      } catch {
-        showError('Reset Failed', 'Failed to reset template');
-      }
-    }
-  };
-
-  // Load templates when showing template editor
-  useEffect(() => {
-    if (showTemplateEditor) {
-      loadTemplates();
-    }
-  }, [showTemplateEditor, loadTemplates]);
 
   const updatePayPalSetting = (field: keyof PayPalSettings, value: string | boolean) => {
     setPaypalSettings(prev => ({ ...prev, [field]: value }));
@@ -684,165 +578,18 @@ const AdminSideMenu: React.FC = () => {
 
               {/* Template Management */}
               <div className="bg-slate-700 p-4 rounded-lg">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-medium text-white flex items-center space-x-2">
-                    <Edit3 className="w-4 h-4" />
-                    <span>Email Templates</span>
-                  </h4>
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      if (!showTemplateEditor) {
-                        // When opening editor, load the first template by default
-                        selectTemplate('order_confirmation');
-                      }
-                      setShowTemplateEditor(!showTemplateEditor);
-                    }}
-                    className="text-xs px-2 py-1 flex items-center space-x-1"
-                  >
-                    {showTemplateEditor ? (
-                      <>
-                        <X className="w-3 h-3" />
-                        <span>Close Editor</span>
-                      </>
-                    ) : (
-                      <>
-                        <Edit3 className="w-3 h-3" />
-                        <span>Open Editor</span>
-                      </>
-                    )}
-                  </Button>
-                </div>
-
-                {!showTemplateEditor ? (
-                  // Template list view
-                  <div className="space-y-2">
-                    {[
-                      'order_confirmation',
-                      'order_processing', 
-                      'order_shipped',
-                      'order_delivered',
-                      'order_cancelled'
-                    ].map((templateName) => (
-                      <div key={templateName} className="flex items-center justify-between bg-slate-800 p-2 rounded text-xs">
-                        <span className="text-slate-300 capitalize">
-                          {templateName.replace('_', ' ')}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          onClick={() => {
-                            selectTemplate(templateName);
-                            setShowTemplateEditor(true);
-                          }}
-                          className="text-xs px-2 py-1 text-blue-400 hover:text-blue-300"
-                        >
-                          <Edit3 className="w-3 h-3 mr-1" />
-                          Edit
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  // Template editor view
-                  <div className="space-y-4">
-                    {/* Template selector */}
-                    <div>
-                      <label className="block text-xs font-medium text-slate-400 mb-1">Select Template</label>
-                      <select
-                        value={selectedTemplate || ''}
-                        onChange={(e) => selectTemplate(e.target.value)}
-                        className="w-full px-2 py-1 bg-slate-800 border border-slate-600 rounded text-white text-xs focus:outline-none focus:ring-1 focus:ring-red-500"
-                      >
-                        <option value="">Choose template...</option>
-                        <option value="order_confirmation">Order Confirmation</option>
-                        <option value="order_processing">Order Processing</option>
-                        <option value="order_shipped">Order Shipped</option>
-                        <option value="order_delivered">Order Delivered</option>
-                        <option value="order_cancelled">Order Cancelled</option>
-                      </select>
-                    </div>
-
-                    {/* Show helper text when no template selected */}
-                    {!selectedTemplate && (
-                      <div className="bg-slate-800 p-3 rounded text-center">
-                        <p className="text-slate-400 text-xs">
-                          Please select a template above to start editing
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Template editing form - show when template is selected */}
-                    {selectedTemplate && (
-                    <div className="space-y-4">
-                      {/* Template editing */}
-                      <div>
-                        <label className="block text-xs font-medium text-slate-400 mb-1">Subject Line</label>
-                        <input
-                          type="text"
-                          value={editingSubject}
-                          onChange={(e) => setEditingSubject(e.target.value)}
-                          className="w-full px-2 py-1 bg-slate-800 border border-slate-600 rounded text-white text-xs focus:outline-none focus:ring-1 focus:ring-red-500"
-                          placeholder="Email subject..."
-                        />
-                      </div>
-
-                        <div>
-                          <label className="block text-xs font-medium text-slate-400 mb-1">Email Body (HTML)</label>
-                          <textarea
-                            value={editingBody}
-                            onChange={(e) => setEditingBody(e.target.value)}
-                            rows={12}
-                            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-red-500 font-mono resize-vertical"
-                            placeholder="HTML email template..."
-                            style={{ minHeight: '200px' }}
-                          />
-                          <div className="text-xs text-slate-500 mt-1">
-                            Tip: Use variables like {'{customerName}'}, {'{orderId}'}, {'{items}'} for dynamic content
-                          </div>
-                        </div>
-
-                        {/* Template actions */}
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            onClick={saveTemplate}
-                            className="flex items-center space-x-1 text-xs px-2 py-1"
-                          >
-                            <Save className="w-3 h-3" />
-                            <span>Save</span>
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            onClick={resetTemplate}
-                            className="flex items-center space-x-1 text-xs px-2 py-1"
-                          >
-                            <RotateCcw className="w-3 h-3" />
-                            <span>Reset</span>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            onClick={() => setPreviewMode(!previewMode)}
-                            className="text-xs px-2 py-1"
-                          >
-                            {previewMode ? 'Edit' : 'Preview'}
-                          </Button>
-                        </div>
-
-                        {previewMode && (
-                          <div className="bg-slate-800 p-4 rounded border">
-                            <div className="text-sm font-medium text-slate-400 mb-3">Email Preview:</div>
-                            <div className="bg-white p-4 rounded text-black text-sm max-h-96 overflow-y-auto">
-                              <div className="font-bold mb-3 text-lg border-b pb-2">{editingSubject}</div>
-                              <div 
-                                dangerouslySetInnerHTML={{ __html: editingBody }} 
-                                className="prose prose-sm max-w-none"
-                              />
-                            </div>
-                          </div>
-                        )}
-                    </div>
-                    )}
-                  </div>
-                )}
+                <h4 className="text-sm font-medium text-white mb-2">Email Templates</h4>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    closeAdminMenu();
+                    openEmailTemplateAdmin();
+                  }}
+                  className="w-full flex items-center justify-center space-x-2"
+                >
+                  <Mail className="w-4 h-4" />
+                  <span>Edit Email Templates</span>
+                </Button>
               </div>
 
               {/* Email Status */}
@@ -942,6 +689,7 @@ const AdminSideMenu: React.FC = () => {
             )}
             
             </div> {/* Close consistent width wrapper */}
+          </div>
         </div>
       </motion.div>
     </AnimatePresence>

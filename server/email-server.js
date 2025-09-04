@@ -29,7 +29,7 @@ function createTransporter() {
   
   switch (provider) {
     case 'gmail':
-      return nodemailer.createTransporter({
+      return nodemailer.createTransport({
         service: 'gmail',
         auth: {
           user: process.env.GMAIL_USER,
@@ -38,7 +38,7 @@ function createTransporter() {
       });
       
     case 'smtp':
-      return nodemailer.createTransporter({
+      return nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: parseInt(process.env.SMTP_PORT) || 587,
         secure: process.env.SMTP_SECURE === 'true',
@@ -49,7 +49,7 @@ function createTransporter() {
       });
       
     case 'sendgrid':
-      return nodemailer.createTransporter({
+      return nodemailer.createTransport({
         host: 'smtp.sendgrid.net',
         port: 587,
         auth: {

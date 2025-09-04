@@ -87,6 +87,14 @@ const Header: React.FC = () => {
   const [categorySearchQuery, setCategorySearchQuery] = useState('');
   const [setSearchQuery, setSetSearchQuery] = useState('');
   const [productSearchQuery, setProductSearchQuery] = useState('');
+  
+  // Product filter states
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedRarity, setSelectedRarity] = useState<string>('all');
+  const [selectedCondition, setSelectedCondition] = useState<string>('all');
+  const [priceRange, setPriceRange] = useState<{ min: string; max: string }>({ min: '', max: '' });
+  const [stockFilter, setStockFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('newest');
 
   const navigation = [
     { name: 'Home', href: '/', icon: Home },
@@ -113,6 +121,17 @@ const Header: React.FC = () => {
       condition: product.condition || 'NM',
       stock: product.stock.toString()
     });
+    
+    // Scroll to edit form after a short delay to ensure it's rendered
+    setTimeout(() => {
+      const editForm = document.getElementById('edit-product-form');
+      if (editForm) {
+        editForm.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+      }
+    }, 100);
   };
 
   const handleSaveEdit = () => {
@@ -1003,7 +1022,7 @@ const Header: React.FC = () => {
 
               {/* Edit Product Form */}
               {editingProduct && (
-                <div className="p-6 border-b border-slate-700 bg-slate-700/30">
+                <div id="edit-product-form" className="p-6 border-b border-slate-700 bg-slate-700/30">
                   <h3 className="text-lg font-medium text-white mb-4">Edit Product</h3>
                   <div className="space-y-4">
                     <div>
@@ -1159,40 +1178,295 @@ const Header: React.FC = () => {
               <div className="p-6">
                 <h3 className="text-lg font-medium text-white mb-4">Products</h3>
                 
-                {/* Product Search */}
-                <div className="mb-4">
-                  <input
-                    type="text"
-                    placeholder="Search products..."
-                    value={productSearchQuery}
-                    onChange={(e) => setProductSearchQuery(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-red-500"
-                  />
+                {/* Product Filters */}
+                <div className="mb-6 space-y-4">
+                  {/* Search Bar */}
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Search products..."
+                      value={productSearchQuery}
+                      onChange={(e) => setProductSearchQuery(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-red-500"
+                    />
+                  </div>
+
+                  {/* Filter Row 1: Category and Rarity */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 mb-1">Category</label>
+                      <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="w-full px-2 py-1.5 bg-slate-800 border border-slate-600 rounded text-white text-xs focus:outline-none focus:ring-1 focus:ring-red-500"
+                      >
+                        <option value="all">All Categories</option>
+                        {managedCategories.map(category => (
+                          <option key={category.id} value={category.id}>{category.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 mb-1">Rarity</label>
+                      <select
+                        value={selectedRarity}
+                        onChange={(e) => setSelectedRarity(e.target.value)}
+                        className="w-full px-2 py-1.5 bg-slate-800 border border-slate-600 rounded text-white text-xs focus:outline-none focus:ring-1 focus:ring-red-500"
+                      >
+                        <option value="all">All Rarities</option>
+                        <option value="Common">Common</option>
+                        <option value="Uncommon">Uncommon</option>
+                        <option value="Rare">Rare</option>
+                        <option value="Ultra Rare">Ultra Rare</option>
+                        <option value="Secret Rare">Secret Rare</option>
+                        <option value="Special">Special</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Filter Row 2: Condition and Stock */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 mb-1">Condition</label>
+                      <select
+                        value={selectedCondition}
+                        onChange={(e) => setSelectedCondition(e.target.value)}
+                        className="w-full px-2 py-1.5 bg-slate-800 border border-slate-600 rounded text-white text-xs focus:outline-none focus:ring-1 focus:ring-red-500"
+                      >
+                        <option value="all">All Conditions</option>
+                        <option value="NM">Near Mint</option>
+                        <option value="LP">Light Play</option>
+                        <option value="MP">Moderate Play</option>
+                        <option value="HP">Heavy Play</option>
+                        <option value="DMG">Damaged</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 mb-1">Stock Status</label>
+                      <select
+                        value={stockFilter}
+                        onChange={(e) => setStockFilter(e.target.value)}
+                        className="w-full px-2 py-1.5 bg-slate-800 border border-slate-600 rounded text-white text-xs focus:outline-none focus:ring-1 focus:ring-red-500"
+                      >
+                        <option value="all">All Stock</option>
+                        <option value="in-stock">In Stock</option>
+                        <option value="low-stock">Low Stock (≤5)</option>
+                        <option value="out-of-stock">Out of Stock</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Filter Row 3: Price Range */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Price Range</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="number"
+                        placeholder="Min"
+                        step="0.01"
+                        value={priceRange.min}
+                        onChange={(e) => setPriceRange({ ...priceRange, min: e.target.value })}
+                        className="px-2 py-1.5 bg-slate-800 border border-slate-600 rounded text-white text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-red-500"
+                      />
+                      <input
+                        type="number"
+                        placeholder="Max"
+                        step="0.01"
+                        value={priceRange.max}
+                        onChange={(e) => setPriceRange({ ...priceRange, max: e.target.value })}
+                        className="px-2 py-1.5 bg-slate-800 border border-slate-600 rounded text-white text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-red-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Sort By */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Sort By</label>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="w-full px-2 py-1.5 bg-slate-800 border border-slate-600 rounded text-white text-xs focus:outline-none focus:ring-1 focus:ring-red-500"
+                    >
+                      <option value="newest">Newest First</option>
+                      <option value="oldest">Oldest First</option>
+                      <option value="price-low">Price: Low to High</option>
+                      <option value="price-high">Price: High to Low</option>
+                      <option value="name-asc">Name: A to Z</option>
+                      <option value="name-desc">Name: Z to A</option>
+                      <option value="stock-high">Stock: High to Low</option>
+                      <option value="stock-low">Stock: Low to High</option>
+                    </select>
+                  </div>
+
+                  {/* Clear Filters Button */}
+                  <button
+                    onClick={() => {
+                      setProductSearchQuery('');
+                      setSelectedCategory('all');
+                      setSelectedRarity('all');
+                      setSelectedCondition('all');
+                      setPriceRange({ min: '', max: '' });
+                      setStockFilter('all');
+                      setSortBy('newest');
+                    }}
+                    className="w-full px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white text-xs font-medium rounded transition-colors"
+                  >
+                    Clear All Filters
+                  </button>
+                </div>
+
+                {/* Products Results */}
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-sm text-slate-400">
+                    {(() => {
+                      const filteredProducts = products.filter(product => {
+                        const searchMatch = !productSearchQuery || 
+                          product.title.toLowerCase().includes(productSearchQuery.toLowerCase()) ||
+                          product.description.toLowerCase().includes(productSearchQuery.toLowerCase()) ||
+                          product.sku.toLowerCase().includes(productSearchQuery.toLowerCase()) ||
+                          product.rarity?.toLowerCase().includes(productSearchQuery.toLowerCase());
+                        const categoryMatch = selectedCategory === 'all' || product.categoryId === selectedCategory;
+                        const rarityMatch = selectedRarity === 'all' || product.rarity === selectedRarity;
+                        const conditionMatch = selectedCondition === 'all' || product.condition === selectedCondition;
+                        const minPrice = priceRange.min ? parseFloat(priceRange.min) : 0;
+                        const maxPrice = priceRange.max ? parseFloat(priceRange.max) : Infinity;
+                        const priceMatch = product.price >= minPrice && product.price <= maxPrice;
+                        let stockMatch = true;
+                        if (stockFilter === 'in-stock') stockMatch = product.stock > 0;
+                        else if (stockFilter === 'low-stock') stockMatch = product.stock > 0 && product.stock <= 5;
+                        else if (stockFilter === 'out-of-stock') stockMatch = product.stock === 0;
+                        return searchMatch && categoryMatch && rarityMatch && conditionMatch && priceMatch && stockMatch;
+                      });
+                      return `${filteredProducts.length} of ${products.length} products`;
+                    })()}
+                  </span>
                 </div>
 
                 <div className="space-y-3">
                   {products
-                    .filter(product => 
-                      product.title.toLowerCase().includes(productSearchQuery.toLowerCase()) ||
-                      product.description.toLowerCase().includes(productSearchQuery.toLowerCase()) ||
-                      product.sku.toLowerCase().includes(productSearchQuery.toLowerCase()) ||
-                      product.rarity?.toLowerCase().includes(productSearchQuery.toLowerCase())
-                    )
+                    .filter(product => {
+                      // Text search filter
+                      const searchMatch = !productSearchQuery || 
+                        product.title.toLowerCase().includes(productSearchQuery.toLowerCase()) ||
+                        product.description.toLowerCase().includes(productSearchQuery.toLowerCase()) ||
+                        product.sku.toLowerCase().includes(productSearchQuery.toLowerCase()) ||
+                        product.rarity?.toLowerCase().includes(productSearchQuery.toLowerCase());
+
+                      // Category filter
+                      const categoryMatch = selectedCategory === 'all' || product.categoryId === selectedCategory;
+
+                      // Rarity filter
+                      const rarityMatch = selectedRarity === 'all' || product.rarity === selectedRarity;
+
+                      // Condition filter
+                      const conditionMatch = selectedCondition === 'all' || product.condition === selectedCondition;
+
+                      // Price range filter
+                      const minPrice = priceRange.min ? parseFloat(priceRange.min) : 0;
+                      const maxPrice = priceRange.max ? parseFloat(priceRange.max) : Infinity;
+                      const priceMatch = product.price >= minPrice && product.price <= maxPrice;
+
+                      // Stock filter
+                      let stockMatch = true;
+                      if (stockFilter === 'in-stock') {
+                        stockMatch = product.stock > 0;
+                      } else if (stockFilter === 'low-stock') {
+                        stockMatch = product.stock > 0 && product.stock <= 5;
+                      } else if (stockFilter === 'out-of-stock') {
+                        stockMatch = product.stock === 0;
+                      }
+
+                      return searchMatch && categoryMatch && rarityMatch && conditionMatch && priceMatch && stockMatch;
+                    })
+                    .sort((a, b) => {
+                      switch (sortBy) {
+                        case 'oldest':
+                          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                        case 'price-low':
+                          return a.price - b.price;
+                        case 'price-high':
+                          return b.price - a.price;
+                        case 'name-asc':
+                          return a.title.localeCompare(b.title);
+                        case 'name-desc':
+                          return b.title.localeCompare(a.title);
+                        case 'stock-high':
+                          return b.stock - a.stock;
+                        case 'stock-low':
+                          return a.stock - b.stock;
+                        case 'newest':
+                        default:
+                          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                      }
+                    })
                     .map((product: Product) => (
                     <div
                       key={product.id}
                       className="flex items-center justify-between p-4 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors"
                     >
                       <div className="flex items-center space-x-3">
-                        <img
-                          src={product.image}
-                          alt={product.title}
-                          className="w-12 h-16 object-cover rounded border border-slate-600"
-                        />
-                        <div>
-                          <h4 className="text-white font-medium text-sm">{product.title}</h4>
-                          <p className="text-slate-400 text-xs">{product.rarity}</p>
-                          <p className="text-green-400 text-sm font-medium">${product.price}</p>
+                        <div className="relative">
+                          <img
+                            src={product.image}
+                            alt={product.title}
+                            className="w-12 h-12 object-cover rounded border border-slate-600"
+                          />
+                          {product.stock === 0 && (
+                            <div className="absolute inset-0 bg-red-500/20 rounded flex items-center justify-center">
+                              <span className="text-red-400 text-xs font-bold">OOS</span>
+                            </div>
+                          )}
+                          {product.stock > 0 && product.stock <= 5 && (
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full"></div>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="text-white font-medium text-sm">{product.title}</h4>
+                            <span className="text-green-400 text-sm font-medium">${product.price}</span>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 mb-1">
+                            {product.rarity && (
+                              <span className={`text-xs px-2 py-0.5 rounded ${
+                                product.rarity === 'Common' ? 'bg-gray-600/50 text-gray-300' :
+                                product.rarity === 'Uncommon' ? 'bg-green-600/50 text-green-300' :
+                                product.rarity === 'Rare' ? 'bg-blue-600/50 text-blue-300' :
+                                product.rarity === 'Ultra Rare' ? 'bg-purple-600/50 text-purple-300' :
+                                product.rarity === 'Secret Rare' ? 'bg-yellow-600/50 text-yellow-300' :
+                                'bg-slate-600/50 text-slate-300'
+                              }`}>
+                                {product.rarity}
+                              </span>
+                            )}
+                            
+                            {product.condition && (
+                              <span className={`text-xs px-2 py-0.5 rounded ${
+                                product.condition === 'NM' ? 'bg-green-600/50 text-green-300' :
+                                product.condition === 'LP' ? 'bg-blue-600/50 text-blue-300' :
+                                product.condition === 'MP' ? 'bg-yellow-600/50 text-yellow-300' :
+                                product.condition === 'HP' ? 'bg-orange-600/50 text-orange-300' :
+                                product.condition === 'DMG' ? 'bg-red-600/50 text-red-300' :
+                                'bg-slate-600/50 text-slate-300'
+                              }`}>
+                                {product.condition === 'NM' ? 'Near Mint' :
+                                 product.condition === 'LP' ? 'Light Played' :
+                                 product.condition === 'MP' ? 'Moderately Played' :
+                                 product.condition === 'HP' ? 'Heavily Played' :
+                                 product.condition === 'DMG' ? 'Damaged' :
+                                 product.condition}
+                              </span>
+                            )}
+                            
+                            <span className={`text-xs px-2 py-0.5 rounded ${
+                              product.stock === 0 ? 'bg-red-600/50 text-red-300' :
+                              product.stock <= 5 ? 'bg-yellow-600/50 text-yellow-300' :
+                              'bg-green-600/50 text-green-300'
+                            }`}>
+                              Stock: {product.stock}
+                            </span>
+                          </div>
+                          
                           <p className="text-slate-500 text-xs">
                             Added: {new Date(product.createdAt).toLocaleDateString('en-US', {
                               year: 'numeric',

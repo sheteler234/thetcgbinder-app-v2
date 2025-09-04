@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Package, Eye, Search, Download, RefreshCw } from 'lucide-react';
+import { X, Package, Eye, Search, Download, RefreshCw, Edit, Save, User, MapPin, ShoppingBag, Plus, Trash2 } from 'lucide-react';
 import { Button } from './Button';
 import { useUiStore } from '../../store/useUi';
 import { useNotifications } from '../../store/useUi';
@@ -9,13 +9,26 @@ import type { Order } from '../../lib/types';
 
 const OrdersSideMenu: React.FC = () => {
   const { isOrdersMenuOpen, closeOrdersMenu } = useUiStore();
-  const { showSuccess } = useNotifications();
+  const { showSuccess, showError } = useNotifications();
   const [orders, setOrders] = useState<Order[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [paymentFilter, setPaymentFilter] = useState<string>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
+  
+  // Editing states
+  const [editingSection, setEditingSection] = useState<'customer' | 'shipping' | 'items' | null>(null);
+  const [editingCustomer, setEditingCustomer] = useState({ name: '', email: '' });
+  const [editingShipping, setEditingShipping] = useState({
+    name: '',
+    street: '',
+    city: '',
+    state: '',
+    zip: '',
+    country: ''
+  });
+  const [editingItems, setEditingItems] = useState<Order['items']>([]);
 
   // Load orders from localStorage
   useEffect(() => {
@@ -235,6 +248,89 @@ const OrdersSideMenu: React.FC = () => {
     }
   };
 
+  // Helper function to check email configuration status
+  const getEmailConfigStatus = useCallback(() => {
+    const emailSettings = emailService.getSettings();
+    
+    if (!emailSettings.enabled) {
+      return { 
+        isConfigured: false, 
+        status: 'disabled', 
+        message: 'Email service is disabled',
+        color: 'text-yellow-400'
+      };
+    }
+
+    if (emailSettings.provider === 'gmail-dev' || emailSettings.provider === 'gmail-prod') {
+      const configKey = emailSettings.provider === 'gmail-dev' ? 'gmail-dev-config' : 'gmail-prod-config';
+      const gmailConfig = localStorage.getItem(configKey);
+      
+      if (!gmailConfig) {
+        return { 
+          isConfigured: false, 
+          status: 'missing', 
+          message: `${emailSettings.provider.toUpperCase()} not configured`,
+          color: 'text-red-400'
+        };
+      }
+      
+      const config = JSON.parse(gmailConfig);
+      if (!config.user || !config.appPassword) {
+        return { 
+          isConfigured: false, 
+          status: 'incomplete', 
+          message: `${emailSettings.provider.toUpperCase()} incomplete`,
+          color: 'text-orange-400'
+        };
+      }
+      
+      return { 
+        isConfigured: true, 
+        status: 'ready', 
+        message: emailSettings.provider === 'gmail-dev' ? 'Gmail Dev' : 'Gmail Prod',
+        color: 'text-green-400'
+      };
+    }
+
+    if (emailSettings.provider === 'smtp') {
+      const smtpConfig = localStorage.getItem('smtp-config');
+      if (!smtpConfig) {
+        return { 
+          isConfigured: false, 
+          status: 'missing', 
+          message: 'SMTP not configured',
+          color: 'text-red-400'
+        };
+      }
+      
+      const config = JSON.parse(smtpConfig);
+      if (!config.host || !config.user || !config.password) {
+        return { 
+          isConfigured: false, 
+          status: 'incomplete', 
+          message: 'SMTP incomplete',
+          color: 'text-orange-400'
+        };
+      }
+      
+      return { 
+        isConfigured: true, 
+        status: 'ready', 
+        message: 'SMTP',
+        color: 'text-green-400'
+      };
+    }
+
+    // This shouldn't be reached with current providers, but included for safety
+    return { 
+      isConfigured: true, 
+      status: 'ready', 
+      message: emailSettings.provider === 'gmail-dev' ? 'Gmail Dev' : 
+               emailSettings.provider === 'gmail-prod' ? 'Gmail Prod' : 'SMTP',
+      color: 'text-green-400'
+    };
+  }, []);
+
   const updateOrderStatus = useCallback(async (orderId: string, newStatus: Order['status']) => {
     // Confirm critical status changes
     if (newStatus === 'cancelled') {
@@ -304,15 +400,65 @@ const OrdersSideMenu: React.FC = () => {
       // Send status update email
       if (currentOrder) {
         try {
+          // Get current email settings to check configuration
+          const emailSettings = emailService.getSettings();
+          
+          // Check if email service is enabled
+          if (!emailSettings.enabled) {
+            showSuccess('Status Updated', `Order ${orderId} status changed to ${newStatus}. (Email service is disabled)`);
+            setIsUpdating(null);
+            return;
+          }
+          
+          // Check Gmail configuration based on provider
+          if (emailSettings.provider === 'gmail-dev' || emailSettings.provider === 'gmail-prod') {
+            const configKey = emailSettings.provider === 'gmail-dev' ? 'gmail-dev-config' : 'gmail-prod-config';
+            const gmailConfig = localStorage.getItem(configKey);
+            
+            if (!gmailConfig) {
+              showError('Email Configuration Missing', `${emailSettings.provider.toUpperCase()} configuration not found. Please configure in Admin panel.`);
+              setIsUpdating(null);
+              return;
+            }
+            
+            const config = JSON.parse(gmailConfig);
+            if (!config.user || !config.appPassword) {
+              showError('Email Configuration Incomplete', `${emailSettings.provider.toUpperCase()} credentials missing. Please complete setup in Admin panel.`);
+              setIsUpdating(null);
+              return;
+            }
+          }
+          
+          // Check SMTP configuration
+          if (emailSettings.provider === 'smtp') {
+            const smtpConfig = localStorage.getItem('smtp-config');
+            if (!smtpConfig) {
+              showError('SMTP Configuration Missing', 'SMTP configuration not found. Please configure in Admin panel.');
+              setIsUpdating(null);
+              return;
+            }
+            
+            const config = JSON.parse(smtpConfig);
+            if (!config.host || !config.user || !config.password) {
+              showError('SMTP Configuration Incomplete', 'SMTP credentials missing. Please complete setup in Admin panel.');
+              setIsUpdating(null);
+              return;
+            }
+          }
+          
           const emailSent = await emailService.sendStatusUpdate(currentOrder, newStatus);
           if (emailSent) {
-            showSuccess('Status Updated', `Order ${orderId} status changed to ${newStatus}. Email notification sent.`);
+            const providerName = emailSettings.provider === 'gmail-dev' ? 'Gmail Dev' : 
+                                emailSettings.provider === 'gmail-prod' ? 'Gmail Prod' : 
+                                emailSettings.provider.toUpperCase();
+            showSuccess('Status Updated', `Order ${orderId} status changed to ${newStatus}. Email sent via ${providerName}.`);
           } else {
             showSuccess('Status Updated', `Order ${orderId} status changed to ${newStatus}. (Email service unavailable)`);
           }
         } catch (error) {
           console.error('Failed to send email:', error);
-          showSuccess('Status Updated', `Order ${orderId} status changed to ${newStatus}. (Email failed to send)`);
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          showError('Email Failed', `Status updated to ${newStatus}, but email failed: ${errorMessage}`);
         }
       } else {
         showSuccess('Status Updated', `Order ${orderId} status changed to ${newStatus}`);
@@ -320,7 +466,123 @@ const OrdersSideMenu: React.FC = () => {
       
       setIsUpdating(null);
     }, 300);
-  }, [orders, showSuccess]);
+  }, [orders, showSuccess, showError]);
+
+  // Editing functions
+  const startEditCustomer = () => {
+    if (!selectedOrder) return;
+    setEditingSection('customer');
+    setEditingCustomer({
+      name: selectedOrder.customerName,
+      email: selectedOrder.customerEmail
+    });
+  };
+
+  const startEditShipping = () => {
+    if (!selectedOrder) return;
+    setEditingSection('shipping');
+    setEditingShipping(selectedOrder.shippingAddress);
+  };
+
+  const startEditItems = () => {
+    if (!selectedOrder) return;
+    setEditingSection('items');
+    setEditingItems([...selectedOrder.items]);
+  };
+
+  const saveCustomerEdit = () => {
+    if (!selectedOrder) return;
+    
+    const updatedOrder = {
+      ...selectedOrder,
+      customerName: editingCustomer.name,
+      customerEmail: editingCustomer.email
+    };
+
+    updateOrderData(updatedOrder);
+    setEditingSection(null);
+    showSuccess('Customer Updated', 'Customer details have been saved successfully');
+  };
+
+  const saveShippingEdit = () => {
+    if (!selectedOrder) return;
+    
+    const updatedOrder = {
+      ...selectedOrder,
+      shippingAddress: editingShipping
+    };
+
+    updateOrderData(updatedOrder);
+    setEditingSection(null);
+    showSuccess('Shipping Updated', 'Shipping address has been saved successfully');
+  };
+
+  const saveItemsEdit = () => {
+    if (!selectedOrder) return;
+    
+    // Calculate new total
+    const newTotal = editingItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    const updatedOrder = {
+      ...selectedOrder,
+      items: editingItems,
+      total: newTotal
+    };
+
+    updateOrderData(updatedOrder);
+    setEditingSection(null);
+    showSuccess('Items Updated', 'Order items have been saved successfully');
+  };
+
+  const updateOrderData = (updatedOrder: Order) => {
+    // Update orders list
+    setOrders(prevOrders => {
+      const updatedOrders = prevOrders.map(order => 
+        order.id === updatedOrder.id ? updatedOrder : order
+      );
+      localStorage.setItem('orders', JSON.stringify(updatedOrders));
+      return updatedOrders;
+    });
+
+    // Update selected order
+    setSelectedOrder(updatedOrder);
+  };
+
+  const cancelEdit = () => {
+    setEditingSection(null);
+  };
+
+  const addItem = () => {
+    const newItem = {
+      productId: `PROD_${Date.now()}`,
+      title: 'New Item',
+      qty: 1,
+      priceAtPurchase: 0,
+      quantity: 1,
+      price: 0,
+      image: '/api/placeholder/200/280'
+    };
+    setEditingItems([...editingItems, newItem]);
+  };
+
+  const removeItem = (index: number) => {
+    setEditingItems(editingItems.filter((_, i) => i !== index));
+  };
+
+  const updateItem = (index: number, field: string, value: string | number) => {
+    setEditingItems(editingItems.map((item, i) => {
+      if (i === index) {
+        const updatedItem = { ...item, [field]: value };
+        // Update both qty and quantity for consistency
+        if (field === 'quantity' || field === 'qty') {
+          updatedItem.quantity = value as number;
+          updatedItem.qty = value as number;
+        }
+        return updatedItem;
+      }
+      return item;
+    }));
+  };
 
   if (!isOrdersMenuOpen) return null;
 
@@ -341,13 +603,13 @@ const OrdersSideMenu: React.FC = () => {
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed right-0 top-0 h-full w-[600px] bg-slate-800 shadow-2xl z-50 overflow-y-auto border-l border-slate-700"
+        className="fixed right-0 top-0 h-full w-full sm:w-[500px] md:w-[600px] lg:w-[700px] xl:w-[800px] bg-slate-800 shadow-2xl z-50 overflow-y-auto border-l border-slate-700"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-700 bg-slate-800/95 backdrop-blur-sm sticky top-0 z-10">
-          <div className="flex items-center space-x-3">
-            <Package className="w-6 h-6 text-red-400" />
-            <h2 className="text-xl font-semibold text-white">Orders Management</h2>
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-700 bg-slate-800/95 backdrop-blur-sm sticky top-0 z-10">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <Package className="w-5 h-5 sm:w-6 sm:h-6 text-red-400" />
+            <h2 className="text-lg sm:text-xl font-semibold text-white">Orders Management</h2>
           </div>
           <button
             onClick={closeOrdersMenu}
@@ -358,7 +620,7 @@ const OrdersSideMenu: React.FC = () => {
         </div>
 
         {/* Filters and Search */}
-        <div className="p-6 border-b border-slate-700 space-y-4">
+        <div className="p-4 sm:p-6 border-b border-slate-700 space-y-4">
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
@@ -367,12 +629,12 @@ const OrdersSideMenu: React.FC = () => {
               placeholder="Search orders, customers, or payment IDs..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm sm:text-base"
             />
           </div>
 
           {/* Filters */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">Status</label>
               <select
@@ -423,6 +685,7 @@ const OrdersSideMenu: React.FC = () => {
                 className="text-xs bg-green-600/20 hover:bg-green-600/30 text-green-400"
                 onClick={() => {
                   const testOrder = {
+                    id: `ORD_TEST_${Date.now()}`,
                     userId: 'test_user',
                     customerName: 'Test Customer',
                     customerEmail: 'test@example.com',
@@ -466,10 +729,10 @@ const OrdersSideMenu: React.FC = () => {
         </div>
 
         {/* Orders List */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {selectedOrder ? (
             /* Order Detail View */
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               <div className="flex items-center justify-between">
                 <button
                   onClick={() => setSelectedOrder(null)}
@@ -481,86 +744,338 @@ const OrdersSideMenu: React.FC = () => {
               </div>
 
               {/* Order Summary */}
-              <div className="bg-slate-700/30 rounded-lg p-4 border border-slate-600">
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-white mb-1">{selectedOrder.customerName}</h3>
-                    <p className="text-sm text-slate-400">{selectedOrder.customerEmail}</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xl font-bold text-white">${selectedOrder.total.toFixed(2)}</div>
-                    <div className={`inline-block px-2 py-1 rounded text-xs font-medium ${getStatusColor(selectedOrder.status)}`}>
-                      {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
-                    </div>
-                  </div>
+              <div className="bg-slate-700/30 rounded-lg p-3 sm:p-4 border border-slate-600">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-white font-medium flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Customer Details
+                  </h4>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={startEditCustomer}
+                    className="text-slate-400 hover:text-white"
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
+                {editingSection === 'customer' ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">Name</label>
+                      <input
+                        type="text"
+                        value={editingCustomer.name}
+                        onChange={(e) => setEditingCustomer({ ...editingCustomer, name: e.target.value })}
+                        className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">Email</label>
+                      <input
+                        type="email"
+                        value={editingCustomer.email}
+                        onChange={(e) => setEditingCustomer({ ...editingCustomer, email: e.target.value })}
+                        className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <Button size="sm" onClick={saveCustomerEdit}>
+                        <Save className="h-3 w-3 mr-1" />
+                        Save
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={cancelEdit}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
+                    <div>
+                      <h3 className="text-base sm:text-lg font-semibold text-white mb-1">{selectedOrder.customerName}</h3>
+                      <p className="text-sm text-slate-400 truncate">{selectedOrder.customerEmail}</p>
+                    </div>
+                    <div className="text-left sm:text-right">
+                      <div className="text-lg sm:text-xl font-bold text-white">${selectedOrder.total.toFixed(2)}</div>
+                      <div className={`inline-block px-2 py-1 rounded text-xs font-medium ${getStatusColor(selectedOrder.status)}`}>
+                        {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 text-sm">
+                  <div className="flex justify-between sm:block">
                     <span className="text-slate-400">Payment:</span>
-                    <span className="text-white ml-2">{getPaymentMethodIcon(selectedOrder.paymentMethod)}</span>
+                    <span className="text-white sm:ml-2">{getPaymentMethodIcon(selectedOrder.paymentMethod)}</span>
                   </div>
-                  <div>
+                  <div className="flex justify-between sm:block">
                     <span className="text-slate-400">Payment ID:</span>
-                    <span className="text-white ml-2 font-mono text-xs">{selectedOrder.paymentId}</span>
+                    <span className="text-white sm:ml-2 font-mono text-xs truncate max-w-[150px] sm:max-w-none">{selectedOrder.paymentId}</span>
                   </div>
-                  <div>
+                  <div className="flex justify-between sm:block">
                     <span className="text-slate-400">Date:</span>
-                    <span className="text-white ml-2">{new Date(selectedOrder.createdAt).toLocaleDateString()}</span>
+                    <span className="text-white sm:ml-2">{new Date(selectedOrder.createdAt).toLocaleDateString()}</span>
                   </div>
-                  <div>
+                  <div className="flex justify-between sm:block">
                     <span className="text-slate-400">Time:</span>
-                    <span className="text-white ml-2">{new Date(selectedOrder.createdAt).toLocaleTimeString()}</span>
+                    <span className="text-white sm:ml-2">{new Date(selectedOrder.createdAt).toLocaleTimeString()}</span>
                   </div>
                 </div>
               </div>
 
               {/* Shipping Address */}
               <div className="bg-slate-700/30 rounded-lg p-4 border border-slate-600">
-                <h4 className="text-white font-medium mb-2">Shipping Address</h4>
-                <div className="text-sm text-slate-300 space-y-1">
-                  <div>{selectedOrder.shippingAddress.name}</div>
-                  <div>{selectedOrder.shippingAddress.street}</div>
-                  <div>
-                    {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} {selectedOrder.shippingAddress.zip}
-                  </div>
-                  <div>{selectedOrder.shippingAddress.country}</div>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-white font-medium flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    Shipping Address
+                  </h4>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={startEditShipping}
+                    className="text-slate-400 hover:text-white"
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
                 </div>
+
+                {editingSection === 'shipping' ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">Name</label>
+                      <input
+                        type="text"
+                        value={editingShipping.name}
+                        onChange={(e) => setEditingShipping({ ...editingShipping, name: e.target.value })}
+                        className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">Street Address</label>
+                      <input
+                        type="text"
+                        value={editingShipping.street}
+                        onChange={(e) => setEditingShipping({ ...editingShipping, street: e.target.value })}
+                        className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">City</label>
+                        <input
+                          type="text"
+                          value={editingShipping.city}
+                          onChange={(e) => setEditingShipping({ ...editingShipping, city: e.target.value })}
+                          className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">State</label>
+                        <input
+                          type="text"
+                          value={editingShipping.state}
+                          onChange={(e) => setEditingShipping({ ...editingShipping, state: e.target.value })}
+                          className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">ZIP Code</label>
+                        <input
+                          type="text"
+                          value={editingShipping.zip}
+                          onChange={(e) => setEditingShipping({ ...editingShipping, zip: e.target.value })}
+                          className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Country</label>
+                        <input
+                          type="text"
+                          value={editingShipping.country}
+                          onChange={(e) => setEditingShipping({ ...editingShipping, country: e.target.value })}
+                          className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <Button size="sm" onClick={saveShippingEdit}>
+                        <Save className="h-3 w-3 mr-1" />
+                        Save
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={cancelEdit}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-slate-300 space-y-1">
+                    <div>{selectedOrder.shippingAddress.name}</div>
+                    <div>{selectedOrder.shippingAddress.street}</div>
+                    <div>
+                      {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} {selectedOrder.shippingAddress.zip}
+                    </div>
+                    <div>{selectedOrder.shippingAddress.country}</div>
+                  </div>
+                )}
               </div>
 
               {/* Order Items */}
-              <div className="bg-slate-700/30 rounded-lg p-4 border border-slate-600">
-                <h4 className="text-white font-medium mb-3">Order Items</h4>
-                <div className="space-y-3">
-                  {selectedOrder.items.map((item, index) => (
-                    <div key={index} className="flex items-center space-x-3">
-                      <div className="w-12 h-16 bg-slate-600 rounded overflow-hidden flex-shrink-0">
-                        <img
-                          src={item.image}
-                          alt={item.title}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = '/api/placeholder/200/280';
-                          }}
-                        />
+              <div className="bg-slate-700/30 rounded-lg p-3 sm:p-4 border border-slate-600">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-white font-medium flex items-center gap-2">
+                    <ShoppingBag className="h-4 w-4" />
+                    Order Items
+                  </h4>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={startEditItems}
+                    className="text-slate-400 hover:text-white"
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                </div>
+
+                {editingSection === 'items' ? (
+                  <div className="space-y-4">
+                    {editingItems.map((item, index) => (
+                      <div key={`editing-${index}`} className="bg-slate-800/50 p-3 rounded border border-slate-600">
+                        <div className="flex items-start gap-3">
+                          <div className="w-12 h-16 bg-slate-600 rounded overflow-hidden flex-shrink-0">
+                            <img
+                              src={item.image}
+                              alt={item.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = '/api/placeholder/200/280';
+                              }}
+                            />
+                          </div>
+                          <div className="flex-1 space-y-2">
+                            <div>
+                              <label className="block text-xs font-medium text-slate-300 mb-1">Title</label>
+                              <input
+                                type="text"
+                                value={item.title}
+                                onChange={(e) => updateItem(index, 'title', e.target.value)}
+                                className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="block text-xs font-medium text-slate-300 mb-1">Quantity</label>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={item.quantity}
+                                  onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                                  className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-slate-300 mb-1">Price</label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={item.price}
+                                  onChange={(e) => updateItem(index, 'price', parseFloat(e.target.value) || 0)}
+                                  className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                />
+                              </div>
+                            </div>
+                            <div className="text-xs text-slate-400">
+                              Subtotal: ${(item.price * item.quantity).toFixed(2)}
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeItem(index)}
+                            className="text-red-400 hover:text-red-300 p-1"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h5 className="text-white text-sm font-medium truncate">{item.title}</h5>
-                        <p className="text-slate-400 text-xs">Qty: {item.quantity} × ${item.price}</p>
-                      </div>
-                      <div className="text-white text-sm font-medium">
-                        ${(item.price * item.quantity).toFixed(2)}
+                    ))}
+                    
+                    <div className="flex gap-2 pt-2 border-t border-slate-600">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={addItem}
+                        className="text-green-400 hover:text-green-300"
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add Item
+                      </Button>
+                      <div className="flex-1"></div>
+                      <div className="text-sm text-white font-medium">
+                        Total: ${editingItems.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}
                       </div>
                     </div>
-                  ))}
-                </div>
+                    
+                    <div className="flex gap-2 pt-2 border-t border-slate-600">
+                      <Button size="sm" onClick={saveItemsEdit}>
+                        <Save className="h-3 w-3 mr-1" />
+                        Save Items
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={cancelEdit}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {selectedOrder.items.map((item, index) => (
+                      <div key={`${item.productId}-${index}`} className="flex items-center space-x-3">
+                        <div className="w-10 h-12 sm:w-12 sm:h-16 bg-slate-600 rounded overflow-hidden flex-shrink-0">
+                          <img
+                            src={item.image}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = '/api/placeholder/200/280';
+                            }}
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h5 className="text-white text-sm font-medium truncate">{item.title}</h5>
+                          <p className="text-slate-400 text-xs">Qty: {item.quantity} × ${item.price}</p>
+                        </div>
+                        <div className="text-white text-sm font-medium">
+                          ${(item.price * item.quantity).toFixed(2)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Status Update */}
-              <div className="bg-slate-700/30 rounded-lg p-4 border border-slate-600">
-                <h4 className="text-white font-medium mb-3">Update Status</h4>
-                <div className="grid grid-cols-2 gap-2">
+              <div className="bg-slate-700/30 rounded-lg p-3 sm:p-4 border border-slate-600">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-white font-medium">Update Status</h4>
+                  <div className="text-xs">
+                    {(() => {
+                      const emailStatus = getEmailConfigStatus();
+                      return (
+                        <span className={emailStatus.color}>
+                          📧 {emailStatus.message}
+                        </span>
+                      );
+                    })()}
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {(['pending', 'processing', 'shipped', 'delivered', 'cancelled'] as const).map(status => (
                     <button
                       key={status}
@@ -592,6 +1107,20 @@ const OrdersSideMenu: React.FC = () => {
                     <span className="ml-2 text-yellow-400">• Updating...</span>
                   )}
                 </div>
+                
+                {/* Email Configuration Warning */}
+                {(() => {
+                  const emailStatus = getEmailConfigStatus();
+                  if (!emailStatus.isConfigured) {
+                    return (
+                      <div className="mt-3 p-2 bg-yellow-900/20 border border-yellow-700/50 rounded text-xs">
+                        <span className="text-yellow-400">⚠️ {emailStatus.message}</span>
+                        <span className="text-yellow-300 ml-1">- Status emails won't be sent</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
               
               {/* Status History */}
@@ -600,7 +1129,7 @@ const OrdersSideMenu: React.FC = () => {
                   <h4 className="text-white font-medium mb-3">Status History</h4>
                   <div className="space-y-2">
                     {selectedOrder.statusHistory.slice().reverse().map((history, index) => (
-                      <div key={index} className="flex items-center justify-between text-sm">
+                      <div key={`${history.timestamp}-${history.status}-${index}`} className="flex items-center justify-between text-sm">
                         <div className="flex items-center space-x-2">
                           <div className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(history.status)}`}>
                             {history.status.charAt(0).toUpperCase() + history.status.slice(1)}
@@ -633,16 +1162,27 @@ const OrdersSideMenu: React.FC = () => {
                 filteredOrders.map((order) => (
                   <div
                     key={order.id}
-                    className="bg-slate-700/30 rounded-lg p-4 border border-slate-600 hover:border-slate-500 transition-colors cursor-pointer"
+                    className="bg-slate-700/30 rounded-lg p-3 sm:p-4 border border-slate-600 hover:border-slate-500 transition-colors cursor-pointer"
                     onClick={() => setSelectedOrder(order)}
                   >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
+                      <div className="flex items-center space-x-2 sm:space-x-3">
                         <div className="flex items-center space-x-2">
-                          <span className="text-white font-medium">#{order.id}</span>
+                          <span className="text-white font-medium text-sm">#{order.id}</span>
                           <div className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(order.status)}`}>
                             {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                           </div>
+                          {/* Email Status Indicator */}
+                          {(() => {
+                            const emailStatus = getEmailConfigStatus();
+                            if (emailStatus.isConfigured) {
+                              return <span className="text-green-400 text-xs">📧</span>;
+                            } else if (emailStatus.status === 'disabled') {
+                              return <span className="text-yellow-400 text-xs" title="Email disabled">📧</span>;
+                            } else {
+                              return <span className="text-red-400 text-xs" title="Email not configured">📧</span>;
+                            }
+                          })()}
                         </div>
                       </div>
                       <div className="text-right">
@@ -651,12 +1191,12 @@ const OrdersSideMenu: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between text-sm">
-                      <div>
-                        <div className="text-white font-medium">{order.customerName}</div>
-                        <div className="text-slate-400 text-xs">{order.customerEmail}</div>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between text-sm gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-white font-medium truncate">{order.customerName}</div>
+                        <div className="text-slate-400 text-xs truncate">{order.customerEmail}</div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex-shrink-0">
                         <div className="text-slate-400 text-xs">
                           {new Date(order.createdAt).toLocaleDateString()}
                         </div>

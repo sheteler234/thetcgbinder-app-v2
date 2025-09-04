@@ -17,21 +17,21 @@ const PokemonBinderPage: React.FC<PokemonBinderPageProps> = ({
   onPageChange,
 }) => {
   const handlePageChangeWithDirection = (page: number) => {
-    onPageChange(page + 1); // Convert from 0-based to 1-based
+    onPageChange(page + 1); // Convert from 0-based internal to 1-based URL
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full flex justify-center px-4">
       {/* Binder Container - Now handled entirely by PokemonBinderGrid */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-6xl mx-auto"
+        className="w-full max-w-3xl"
       >
         <PokemonBinderGrid
           products={products}
-          externalCurrentPage={Math.max(0, currentPage - 1)} // Convert from 1-based to 0-based
+          externalCurrentPage={currentPage - 1} // Convert from 1-based URL to 0-based internal
           externalTotalPages={totalPages}
           onPageChange={handlePageChangeWithDirection}
         />

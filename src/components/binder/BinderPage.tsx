@@ -21,13 +21,13 @@ const BinderPage: React.FC<BinderPageProps> = ({
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full flex justify-center px-4">
       {/* Binder Container - Now handled entirely by BinderGrid */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-6xl mx-auto"
+        className="w-full max-w-5xl"
       >
         <BinderGrid
           products={products}

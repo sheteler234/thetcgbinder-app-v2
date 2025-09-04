@@ -37,8 +37,22 @@ const BinderSlot: React.FC<BinderSlotProps> = ({ product }) => {
 
   if (!product) {
     return (
-      <div className="relative w-full h-full aspect-[2.5/3.5] min-h-[80px] max-w-[120px] sm:max-w-[150px] md:max-w-[180px] lg:max-w-[200px] rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-800 flex items-center justify-center">
-        <span className="text-xs text-gray-400 font-medium">Empty Slot</span>
+      <div className="group relative w-full h-full aspect-[2.5/3.5] min-h-[50px] max-w-[70px] sm:max-w-[85px] md:max-w-[100px] lg:max-w-[120px] xl:max-w-[140px] rounded-lg overflow-hidden transition-all duration-300">
+        {/* Card Image Container - matches product card structure exactly */}
+        <div className="relative w-full h-full rounded-lg">
+          {/* Create an invisible image with object-contain to get exact sizing, then overlay the border */}
+          <div className="relative w-full h-full">
+            {/* Invisible placeholder that mimics object-contain behavior */}
+            <div className="w-full h-full object-contain p-1 flex items-center justify-center">
+              <div className="aspect-[2.5/3.5] max-w-full max-h-full relative">
+                {/* Dashed border overlay */}
+                <div className="absolute inset-0 border-2 border-dashed border-gray-400/30 rounded-sm flex items-center justify-center">
+                  <span className="text-xs text-gray-500/50 font-medium">Empty</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -48,20 +62,21 @@ const BinderSlot: React.FC<BinderSlotProps> = ({ product }) => {
 
   return (
     <div 
-      className="group relative w-full h-full aspect-[2.5/3.5] min-h-[80px] max-w-[120px] sm:max-w-[150px] md:max-w-[180px] lg:max-w-[200px] cursor-pointer rounded-lg overflow-hidden bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+      className="group relative w-full h-full aspect-[2.5/3.5] min-h-[50px] max-w-[70px] sm:max-w-[85px] md:max-w-[100px] lg:max-w-[120px] xl:max-w-[140px] cursor-pointer rounded-lg overflow-hidden transition-all duration-300 transform hover:scale-105"
       onClick={handleCardClick}
     >
       {/* Card Image */}
-      <div className="relative w-full h-full bg-gradient-to-br from-blue-900 to-purple-900">
+      <div className="relative w-full h-full rounded-lg">
         {!imageLoaded && !imageError && (
-          <div className="w-full h-full bg-gray-200 animate-pulse flex items-center justify-center">
+          <div className="w-full h-full flex items-center justify-center rounded-lg">
             <span className="text-gray-400 text-xs">Loading...</span>
           </div>
         )}
+        
         <img
           src={product.image}
           alt={product.title}
-          className={`w-full h-full object-cover ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+          className={`w-full h-full object-contain p-1 ${imageLoaded ? 'opacity-100' : 'opacity-0'} transition-all duration-300 group-hover:brightness-75 group-hover:contrast-110`}
           onError={() => {
             console.log('Image failed to load:', product.image);
             setImageError(true);
@@ -76,12 +91,12 @@ const BinderSlot: React.FC<BinderSlotProps> = ({ product }) => {
         
         {/* Fallback content when image fails */}
         {imageError && (
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-800 to-amber-900 flex flex-col items-center justify-center text-white p-1 sm:p-2">
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 p-1 sm:p-2">
             <div className="text-sm sm:text-lg font-bold mb-1">🎴</div>
             <div className="text-xs sm:text-xs font-semibold text-center leading-tight">
               {product.title}
             </div>
-            <div className="text-xs text-amber-200 mt-1">
+            <div className="text-xs text-gray-500 mt-1">
               {product.rarity}
             </div>
           </div>
@@ -100,20 +115,20 @@ const BinderSlot: React.FC<BinderSlotProps> = ({ product }) => {
         )}
         
         {/* Hover Overlay */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/80 transition-all duration-300 flex flex-col justify-center items-center opacity-0 group-hover:opacity-100">
-          <div className="text-center p-1 sm:p-2 md:p-3 space-y-1 sm:space-y-2">
+        <div className="absolute inset-0 transition-all duration-300 flex flex-col justify-center items-center opacity-0 group-hover:opacity-100">
+          <div className="text-center p-0.5 sm:p-1 md:p-1.5 space-y-0.5 sm:space-y-1">
             {/* Product Name */}
-            <h3 className="text-white font-bold text-xs sm:text-sm leading-tight line-clamp-2">
+            <h3 className="text-gray-800 font-bold text-xs sm:text-xs leading-tight line-clamp-2">
               {product.title}
             </h3>
             
             {/* Price */}
-            <div className="text-yellow-400 font-bold text-sm sm:text-lg">
+            <div className="text-orange-600 font-bold text-xs sm:text-sm">
               {formatCurrency(product.price)}
             </div>
             
             {/* Rarity */}
-            <div className="text-gray-300 text-xs">
+            <div className="text-gray-600 text-xs">
               {product.rarity}
             </div>
             
@@ -123,24 +138,24 @@ const BinderSlot: React.FC<BinderSlotProps> = ({ product }) => {
             </div>
             
             {/* Action Buttons */}
-            <div className="flex gap-1 sm:gap-2 mt-2 sm:mt-3">
+            <div className="flex gap-0.5 sm:gap-1 mt-1 sm:mt-1.5">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleCardClick();
                 }}
-                className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs font-medium transition-colors"
+                className="flex items-center gap-0.5 bg-blue-600 hover:bg-blue-700 text-white px-1 sm:px-1.5 py-0.5 sm:py-1 rounded-md text-xs font-medium transition-colors"
               >
-                <Eye className="w-2 h-2 sm:w-3 sm:h-3" />
+                <Eye className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
                 <span className="hidden sm:inline">View</span>
               </button>
               
               <button
                 onClick={handleAddToCart}
                 disabled={stockStatus.label === 'Out of Stock'}
-                className="flex items-center gap-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-500 disabled:cursor-not-allowed text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs font-medium transition-colors"
+                className="flex items-center gap-0.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-500 disabled:cursor-not-allowed text-white px-1 sm:px-1.5 py-0.5 sm:py-1 rounded-md text-xs font-medium transition-colors"
               >
-                <ShoppingCart className="w-2 h-2 sm:w-3 sm:h-3" />
+                <ShoppingCart className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
                 <span className="hidden sm:inline">Add</span>
               </button>
             </div>
@@ -148,12 +163,12 @@ const BinderSlot: React.FC<BinderSlotProps> = ({ product }) => {
         </div>
         
         {/* Quick Price Badge (visible when not hovering) */}
-        <div className="absolute top-1 sm:top-2 left-1 sm:left-2 bg-black/80 text-white px-1 sm:px-2 py-0.5 sm:py-1 rounded-md text-xs font-bold group-hover:opacity-0 transition-opacity">
+        <div className="absolute top-0.5 sm:top-1 left-0.5 sm:left-1 bg-black/80 text-white px-1 sm:px-1.5 py-0.5 sm:py-0.5 rounded-md text-xs font-bold group-hover:opacity-0 transition-opacity">
           {formatCurrency(product.price)}
         </div>
         
         {/* Rarity Badge */}
-        <div className="absolute top-1 sm:top-2 right-1 sm:right-2 bg-purple-600/90 text-white px-1 sm:px-2 py-0.5 sm:py-1 rounded-md text-xs font-medium group-hover:opacity-0 transition-opacity">
+        <div className="absolute top-0.5 sm:top-1 right-0.5 sm:right-1 bg-purple-600/90 text-white px-1 sm:px-1.5 py-0.5 sm:py-0.5 rounded-md text-xs font-medium group-hover:opacity-0 transition-opacity">
           {product.rarity?.split(' ')[0] || 'Common'}
         </div>
       </div>

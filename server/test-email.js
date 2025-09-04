@@ -23,7 +23,7 @@ async function testEmail() {
     
     switch (process.env.EMAIL_PROVIDER) {
       case 'gmail':
-        transporter = nodemailer.createTransporter({
+        transporter = nodemailer.createTransport({
           service: 'gmail',
           auth: {
             user: process.env.GMAIL_USER,
@@ -33,7 +33,7 @@ async function testEmail() {
         break;
         
       case 'smtp':
-        transporter = nodemailer.createTransporter({
+        transporter = nodemailer.createTransport({
           host: process.env.SMTP_HOST,
           port: parseInt(process.env.SMTP_PORT) || 587,
           secure: process.env.SMTP_SECURE === 'true',
@@ -45,7 +45,7 @@ async function testEmail() {
         break;
         
       case 'sendgrid':
-        transporter = nodemailer.createTransporter({
+        transporter = nodemailer.createTransport({
           host: 'smtp.sendgrid.net',
           port: 587,
           auth: {

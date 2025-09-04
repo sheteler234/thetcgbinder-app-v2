@@ -80,7 +80,11 @@ const Home: React.FC = () => {
         className="grid grid-cols-1 md:grid-cols-2 gap-6 mx-auto"
       >
         <button
-          onClick={() => setSelectedBinder('yugioh')}
+          onClick={() => {
+            setSelectedBinder('yugioh');
+            // Reset to first page (welcome page) when switching binders
+            handlePageChange(1);
+          }}
           className={`group relative overflow-hidden rounded-2xl p-6 border transition-all duration-300 text-left ${
             selectedBinder === 'yugioh'
               ? 'bg-gradient-to-br from-amber-500/30 to-yellow-600/30 border-amber-400/70 ring-2 ring-amber-400/50'
@@ -105,7 +109,11 @@ const Home: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setSelectedBinder('pokemon')}
+          onClick={() => {
+            setSelectedBinder('pokemon');
+            // Reset to first page (welcome page) when switching binders
+            handlePageChange(1);
+          }}
           className={`group relative overflow-hidden rounded-2xl p-6 border transition-all duration-300 text-left ${
             selectedBinder === 'pokemon'
               ? 'bg-gradient-to-br from-blue-500/30 to-purple-600/30 border-blue-400/70 ring-2 ring-blue-400/50'

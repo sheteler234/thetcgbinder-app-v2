@@ -17,7 +17,7 @@ import type {
 
 class ApiClient {
   private client: AxiosInstance;
-  private baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+  private baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3005/api';
 
   constructor() {
     this.client = axios.create({

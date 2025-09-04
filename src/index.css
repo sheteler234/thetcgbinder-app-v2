@@ -194,6 +194,45 @@ body {
   position: relative;
 }
 
+/* Improved 3x3 Grid Layout */
+.binder-grid-3x3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 0.25rem;
+  height: 100%;
+  padding: 0.25rem;
+  place-items: center;
+}
+
+@media (min-width: 640px) {
+  .binder-grid-3x3 {
+    gap: 0.375rem;
+    padding: 0.375rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .binder-grid-3x3 {
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .binder-grid-3x3 {
+    gap: 0.625rem;
+    padding: 0.625rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .binder-grid-3x3 {
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+}
+
 /* Grid lines - hidden on mobile, visible on desktop */
 @media (min-width: 768px) {
   .binder-page-black::before {

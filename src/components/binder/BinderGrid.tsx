@@ -232,24 +232,27 @@ const BinderGrid: React.FC<BinderGridProps> = ({
   };
 
   const renderGrid = (products: Product[]) => (
-    <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6 h-full p-3 sm:p-4 md:p-6 place-items-center">
+    <div className="binder-grid-3x3">
       {[...Array(9)].map((_, index) => (
-        <BinderSlot
-          key={index}
-          product={products[index]}
-          index={index}
-        />
+        <div key={index} className="w-full h-full flex items-center justify-center">
+          <BinderSlot
+            product={products[index]}
+            index={index}
+          />
+        </div>
       ))}
     </div>
   );
 
   const renderEmptyGrid = () => (
-    <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6 h-full p-3 sm:p-4 md:p-6 place-items-center">
+    <div className="binder-grid-3x3">
       {[...Array(9)].map((_, index) => (
-        <BinderSlot
-          key={index}
-          index={index}
-        />
+        <div key={index} className="w-full h-full flex items-center justify-center">
+          <BinderSlot
+            key={index}
+            index={index}
+          />
+        </div>
       ))}
     </div>
   );
@@ -365,7 +368,7 @@ const BinderGrid: React.FC<BinderGridProps> = ({
         </div>
 
         {/* Page content area */}
-        <div className="ml-3 sm:ml-4 md:ml-6 lg:ml-8 xl:ml-12 mt-2 sm:mt-4 md:mt-6 lg:mt-8 rounded shadow-lg relative" style={{ aspectRatio: '8.5/11', overflow: 'visible' }}>
+        <div className="ml-1 sm:ml-2 md:ml-3 lg:ml-4 xl:ml-6 mr-1 sm:mr-1 md:mr-2 lg:mr-3 xl:mr-4 mt-1 sm:mt-2 md:mt-3 lg:mt-4 xl:mt-6 mb-1 sm:mb-2 md:mb-3 lg:mb-4 xl:mb-6 rounded shadow-lg relative" style={{ aspectRatio: '8.5/11', minHeight: '450px', height: 'calc(100% - 2rem)', overflow: 'visible' }}>
           {/* Turned Page - Positioned to the left with exact same dimensions */}
           <AnimatePresence>
             {showLeftPage && leftPageIndex !== null && currentPage > 0 && (
@@ -440,9 +443,9 @@ const BinderGrid: React.FC<BinderGridProps> = ({
         </div>
 
         {/* Navigation - aligned with the white page content */}
-        <div className="mt-3 sm:mt-4 md:mt-6 lg:mt-8 xl:mt-12 flex justify-between items-center">
+        <div className="mt-1 sm:mt-2 md:mt-3 lg:mt-4 xl:mt-6 mx-1 sm:mx-2 md:mx-3 lg:mx-4 xl:mx-6 flex justify-between items-center">
           {/* Page navigation controls - aligned with left edge of white page */}
-          <div className="ml-3 sm:ml-4 md:ml-6 lg:ml-8 xl:ml-12 flex items-center gap-1 sm:gap-2 md:gap-3 lg:gap-4">
+          <div className="flex items-center gap-1 sm:gap-2 md:gap-3 lg:gap-4">
             <button
               onClick={prevPage}
               disabled={currentPage === 0}
